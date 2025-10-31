@@ -339,13 +339,11 @@ function handleValidationSuccess(response) {
     }
     // FIN DE LA LÓGICA DE 'REGISTRO_ENCONTRADO'
 
-  } else if (response.status === 'ERROR_TIPO_NUEVO' || response.status === 'ERROR_TIPO_ANT' || response.status === 'YA_REGISTRADO' || response.status === 'ANULADO' || response.status === 'NO_ENCONTRADO_ANT') {
-    statusDiv.innerHTML = `<div class="mensaje error"><strong>Aviso:</strong> ${response.message}</div>`;
-  } else {
-    // ESTE ES EL BLOQUE DONDE ESTÁ CAYENDO TU ERROR DE 'HERMANO'
+  } else { // Errores y otros avisos
     statusDiv.innerHTML = `<div class="mensaje error"><strong>Aviso:</strong> ${response.message}</div>`;
   }
 }
+
 
 
 /**
@@ -419,6 +417,73 @@ function handleComprobanteUploadFailure(error) {
   if (fileInputComprobante) fileInputComprobante.disabled = false;
   if (btnPagarPendiente) btnPagarPendiente.disabled = false;
   if (btnFinalizar) btnFinalizar.disabled = false;
+}
+
+/**
+ * (Fix Punto 19) Función de éxito para la subida de comprobante
+ */
+function handleComprobanteUploadSuccess(response) {
+  document.getElementById('loader-validacion').style.display = 'none';
+  const statusDiv = document.getElementById('status-validacion');
+  const fileInputComprobante = document.getElementById('comprobante-manual-upload');
+  const btnSubmitComprobante = document.getElementById('btn-submit-comprobante-manual');
+  const btnFinalizar = document.getElementById('btn-finalizar-upload');
+  const btnPagarPendiente = document.getElementById('btn-pagar-pendiente');
+  
+  const tipoComprobanteSelect = document.getElementById('tipo-comprobante-select');
+  const cuotaSelectorContainer = document.getElementById('cuota-selector-container');
+  const datosExternoContainer = document.getElementById('datos-externo-container'); // <-- RE-AGREGADO
+  const uploadFileContainer = document.getElementById('upload-file-container');
+  const btnClearComprobante = document.getElementById('btn-clear-comprobante'); // NEW
+
+  if (response.status === 'OK') {
+    // Éxito: Mostrar mensaje con color (Punto 2)
+    const successMsgHtml = `<div class="mensaje exito" style="margin-bottom:10px;">${response.message} (Puede subir otro si es necesario)</div>`;
+    statusDiv.insertAdjacentHTML('afterbegin', successMsgHtml);
+
+    // Resetear/Limpiar Formulario (Punto 2)
+    if(fileInputComprobante) fileInputComprobante.value = '';
+    if(document.getElementById('comprobante-manual-name')) document.getElementById('comprobante-manual-name').textContent = 'Ningún archivo seleccionado';
+    if(tipoComprobanteSelect) tipoComprobanteSelect.value = '';
+    
+    // Ocultar contenedores
+    if (cuotaSelectorContainer) cuotaSelectorContainer.style.display = 'none';
+    if (datosExternoContainer) datosExternoContainer.style.display = 'none'; // <-- RE-AGREGADO
+    if (uploadFileContainer) uploadFileContainer.style.display = 'none';
+
+    if (btnClearComprobante) btnClearComprobante.style.display = 'none';
+    
+    // (LÓGICA REQUERIDA) Limpiar datos del pagador
+    if (document.getElementById('externo-nombre-pagador')) document.getElementById('externo-nombre-pagador').value = '';
+    if (document.getElementById('externo-dni-pagador')) document.getElementById('externo-dni-pagador').value = '';
+
+
+  } else {
+    // Error de lógica (ej. DNI no encontrado)
+    statusDiv.insertAdjacentHTML('afterbegin', `<div class="mensaje error" style="margin-bottom:10px;">${response.message}</div>`);
+  }
+
+  // Re-habilitar botones para subir otro o pagar/finalizar
+  if(btnSubmitComprobante) btnSubmitComprobante.disabled = false;
+  if(fileInputComprobante) fileInputComprobante.disabled = false;
+  if(btnPagarPendiente) btnPagarPendiente.disabled = false;
+  if(btnFinalizar) btnFinalizar.disabled = false;
+}
+
+function iniciarTemporizador(response) {
+  document.getElementById('timer-seccion').style.display = 'block';
+  document.getElementById('btn-validar').disabled = true;
+  let segundos = 8;
+  const countdown = document.getElementById('timer-countdown');
+  countdown.textContent = segundos;
+  const interval = setInterval(() => {
+    segundos--;
+    countdown.textContent = segundos;
+    if (segundos <= 0) {
+      clearInterval(interval);
+      mostrarFormulario(response);
+    }
+  }, 800);
 }
 
 
@@ -533,6 +598,8 @@ function mostrarFormulario(response) {
   toggleCantidadCuotas();
   toggleTransferenciaInfo();
 }
+
+
 
 
 function comprimirYLeerArchivo(file) {
@@ -747,7 +814,7 @@ function addAutorizadoCampos(nombre = '', dni = '') {
   div.innerHTML = `
 <div class="campos-dinamicos">
 <input type="text" class="autorizado-nombre form-cache" placeholder="Nombre y Apellido (Relación)" value="${nombre}" ${isRequired}>
-<input type="text" class="autorizado-dni form-cache" placeholder="DNI" maxlength="8" pattern="\\d{7,8}" value="${dni}" ${isRequired}>
+<input type="text" classs="autorizado-dni form-cache" placeholder="DNI" maxlength="8" pattern="\\d{7,8}" value="${dni}" ${isRequired}>
 </div>
 <button type="button" class="btn-remover" onclick="removerFila(this)">X</button>
 `;
@@ -1047,6 +1114,25 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    // (Punto 25) Recolectar datos bloqueados de Pre-Venta
+    if (document.getElementById('jornada').disabled) {
+      formDataObject['jornada'] = document.getElementById('jornada').value;
+    }
+    if (document.getElementById('email').readOnly) {
+      formDataObject['email'] = document.getElementById('email').value;
+    }
+     if (document.getElementById('nombre').readOnly) {
+      formDataObject['nombre'] = document.getElementById('nombre').value;
+    }
+     if (document.getElementById('apellido').readOnly) {
+      formDataObject['apellido'] = document.getElementById('apellido').value;
+    }
+     if (document.getElementById('fechaNacimiento').readOnly) {
+      formDataObject['fechaNacimiento'] = document.getElementById('fechaNacimiento').value;
+    }
+    // (Fin Punto 25)
+
+
     formDataObject.tipoInscripto = document.getElementById('tipoInscripto').value;
     formDataObject.esHermanoCompletando = (document.getElementById('esHermanoCompletando').value === "true"); // (Punto 6)
 
@@ -1128,3 +1214,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </script>
 </body>
+}
