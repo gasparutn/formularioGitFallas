@@ -24,7 +24,7 @@ const COL_COLEGIO_BUSQUEDA = 9; // Col I (antes H=8)
 const COL_RESPONSABLE_BUSQUEDA = 10; // Col J (antes I=9)
 const COL_TELEFONO_BUSQUEDA = 11; // Col K (antes J=10)
 // =========================================================
-// (Punto 2, 3, 4, 5, 15, 17) CONSTANTES "Registros" ACTUALIZADAS (46 columnas)
+// (Punto 2, 3, 4, 5, 15, 17, 27) CONSTANTES "Registros" ACTUALIZADAS (47 columnas)
 // =========================================================
 const COL_NUMERO_TURNO = 1; // A
 const COL_MARCA_TEMPORAL = 2; // B
@@ -53,27 +53,26 @@ const COL_ESPECIFIQUE_ALERGIA = 24; // X
 const COL_APTITUD_FISICA = 25; // Y
 const COL_FOTO_CARNET = 26; // Z
 const COL_JORNADA = 27; // AA
-const COL_METODO_PAGO = 28; // AB
-const COL_PRECIO = 29; // AC
-const COL_CUOTA_1 = 30; // AD
-const COL_CUOTA_2 = 31; // AE
-const COL_CUOTA_3 = 32; // AF
-const COL_CANTIDAD_CUOTAS = 33; // AG
-const COL_ESTADO_PAGO = 34; // AH
-const COL_MONTO_A_PAGAR = 35; // AI
-const COL_ID_PAGO_MP = 36; // AJ
-const COL_PAGADOR_NOMBRE = 37; // AK (Nombre Pagador MP)
-const COL_DNI_PAGADOR_MP = 38; // AL (NUEVO NOMBRE: DNI Pagador MP)
-// --- NUEVAS COLUMNAS (MINI-FORMULARIO) ---
-const COL_PAGADOR_NOMBRE_MANUAL = 39; // AM (Nombre Pagador Manual)
-const COL_PAGADOR_DNI_MANUAL = 40; // AN (DNI Pagador Manual)
-// --- COLUMNAS DESPLAZADAS ---
-const COL_COMPROBANTE_MP = 41; // AO (Comprobante MP - Webhook)
-const COL_COMPROBANTE_MANUAL_TOTAL_EXT = 42; // AP (Comprobante Manual Total - Mini-form)
-const COL_COMPROBANTE_MANUAL_CUOTA1 = 43; // AQ (Comprobante Manual C1 - Mini-form)
-const COL_COMPROBANTE_MANUAL_CUOTA2 = 44; // AR (Comprobante Manual C2 - Mini-form)
-const COL_COMPROBANTE_MANUAL_CUOTA3 = 45; // AS (Comprobante Manual C3 - Mini-form)
-const COL_ENVIAR_EMAIL_MANUAL = 46; // AT (Enviar Email?)
+const COL_SOCIO = 28; // AB (NUEVA COLUMNA - PUNTO 27)
+const COL_METODO_PAGO = 29; // AC (antes 28)
+const COL_PRECIO = 30; // AD (antes 29)
+const COL_CUOTA_1 = 31; // AE (antes 30)
+const COL_CUOTA_2 = 32; // AF (antes 31)
+const COL_CUOTA_3 = 33; // AG (antes 32)
+const COL_CANTIDAD_CUOTAS = 34; // AH (antes 33)
+const COL_ESTADO_PAGO = 35; // AI (antes 34)
+const COL_MONTO_A_PAGAR = 36; // AJ (antes 35)
+const COL_ID_PAGO_MP = 37; // AK (antes 36)
+const COL_PAGADOR_NOMBRE = 38; // AL (antes 37)
+const COL_DNI_PAGADOR_MP = 39; // AM (antes 38)
+const COL_PAGADOR_NOMBRE_MANUAL = 40; // AN (antes 39)
+const COL_PAGADOR_DNI_MANUAL = 41; // AO (antes 40)
+const COL_COMPROBANTE_MP = 42; // AP (antes 41)
+const COL_COMPROBANTE_MANUAL_TOTAL_EXT = 43; // AQ (antes 42)
+const COL_COMPROBANTE_MANUAL_CUOTA1 = 44; // AR (antes 43)
+const COL_COMPROBANTE_MANUAL_CUOTA2 = 45; // AS (antes 44)
+const COL_COMPROBANTE_MANUAL_CUOTA3 = 46; // AT (antes 45)
+const COL_ENVIAR_EMAIL_MANUAL = 47; // AU (antes 46)
 
 
 // (Punto 25) CONSTANTES PARA LA NUEVA HOJA "Preventa"
@@ -199,13 +198,14 @@ function doPost(e) {
 }
 
 // =========================================================
-// (Punto 5, 11, 17, 24) registrarDatos (ACTUALIZADO)
+// (Punto 5, 11, 17, 24, 27) registrarDatos (ACTUALIZADO)
 // =========================================================
 /**
-* Guarda los datos finales en la hoja "Registros" (46 COLUMNAS)
+* Guarda los datos finales en la hoja "Registros" (47 COLUMNAS)
 * (Punto 5, 11) Ahora también registra a los hermanos.
-* (Punto 17) Checkbox movido a AT.
+* (Punto 17) Checkbox movido a AT (ahora AU).
 * (Punto 24) Lógica de texto de Col C y D actualizada.
+* (Punto 27) Añadida columna SOCIO (AB).
 */
 function registrarDatos(datos) {
   const lock = LockService.getScriptLock();
@@ -228,7 +228,7 @@ function registrarDatos(datos) {
     let hojaRegistro = ss.getSheetByName(NOMBRE_HOJA_REGISTRO);
     if (!hojaRegistro) {
       hojaRegistro = ss.insertSheet(NOMBRE_HOJA_REGISTRO);
-      // --- (¡¡¡ENCABEZADOS ACTUALIZADOS!!!) ---
+      // --- (¡¡¡ENCABEZADOS ACTUALIZADOS PUNTO 27!!!) ---
       hojaRegistro.appendRow([
         'N° de Turno', 'Marca temporal', 'Marca N/E', 'Estado', // A-D
         'Email', 'Nombre', 'Apellido', // E-G (Punto 2)
@@ -239,19 +239,20 @@ function registrarDatos(datos) {
         'Autorizados', // R
         'Deporte', 'Espec. Deporte', 'Enfermedad', 'Espec. Enfermedad', 'Alergia', 'Espec. Alergia', // S-X
         'Aptitud Física (Link)', 'Foto Carnet (Link)', // Y-Z
-        'Jornada', 'Método de Pago', // AA-AB
-        'Precio', // AC (Punto 4)
-        'Cuota 1', 'Cuota 2', 'Cuota 3', 'Cantidad Cuotas', // AD-AG
-        'Estado de Pago', // AH
-        'Monto a Pagar', // AI (Punto 5)
-        'ID Pago MP', 'Nombre Pagador (MP)', 'DNI Pagador MP', // AJ-AL (AL con nuevo nombre)
-        'Nombre y Apellido (Pagador Manual)', 'DNI Pagador (Manual)', // AM-AN (NUEVAS)
-        'Comprobante MP', // AO (antes AM)
-        'Comprobante Manual (Total/Ext)', // AP (antes AN)
-        'Comprobante Manual (C1)', // AQ (antes AO)
-        'Comprobante Manual (C2)', // AR (antes AP)
-        'Comprobante Manual (C3)', // AS (antes AQ)
-        'Enviar Email?' // AT (antes AR)
+        'Jornada', 'SOCIO', // AA-AB (PUNTO 27)
+        'Método de Pago', // AC
+        'Precio', // AD (Punto 4)
+        'Cuota 1', 'Cuota 2', 'Cuota 3', 'Cantidad Cuotas', // AE-AH
+        'Estado de Pago', // AI
+        'Monto a Pagar', // AJ (Punto 5)
+        'ID Pago MP', 'Nombre Pagador (MP)', 'DNI Pagador MP', // AK-AM
+        'Nombre y Apellido (Pagador Manual)', 'DNI Pagador (Manual)', // AN-AO (NUEVAS)
+        'Comprobante MP', // AP (antes AM)
+        'Comprobante Manual (Total/Ext)', // AQ (antes AN)
+        'Comprobante Manual (C1)', // AR (antes AO)
+        'Comprobante Manual (C2)', // AS (antes AP)
+        'Comprobante Manual (C3)', // AT (antes AQ)
+        'Enviar Email?' // AU (antes AR)
       ]);
     }
 
@@ -306,7 +307,7 @@ function registrarDatos(datos) {
     const telResp1 = `(${datos.telAreaResp1}) ${datos.telNumResp1}`;
     const telResp2 = (datos.telAreaResp2 && datos.telNumResp2) ? `(${datos.telAreaResp2}) ${datos.telNumResp2}` : '';
 
-    // (Punto 17) appendRow actualizado para 46 columnas
+    // (Punto 17, 27) appendRow actualizado para 47 columnas
     hojaRegistro.appendRow([
       nuevoNumeroDeTurno, new Date(), marcaNE, estadoInscripto, // A-D
       datos.email, datos.nombre, datos.apellido, // E-G
@@ -317,20 +318,21 @@ function registrarDatos(datos) {
       datos.personasAutorizadas, // R
       datos.practicaDeporte, datos.especifiqueDeporte, datos.tieneEnfermedad, datos.especifiqueEnfermedad, datos.esAlergico, datos.especifiqueAlergia, // S-X
       datos.urlCertificadoAptitud || '', datos.urlFotoCarnet || '', // Y-Z
-      datos.jornada, datos.metodoPago, // AA-AB
-      precio, // AC (Precio)
-      '', '', '', parseInt(datos.cantidadCuotas) || 0, // AD-AG
-      datos.estadoPago, // AH (Estado de Pago)
-      montoAPagar, // AI (Monto a Pagar)
-      '', '', '', // AJ-AL (IDs de Pago MP, etc)
-      '', '', // AM-AN (NUEVAS - Pagador Manual)
-      '', // AO (Comprobante MP)
-      '', '', '', '', // AP-AS (Nuevos Comprobantes Manuales)
-      false // AT (Checkbox)
+      datos.jornada, datos.esSocio, // AA-AB (PUNTO 27)
+      datos.metodoPago, // AC
+      precio, // AD (Precio)
+      '', '', '', parseInt(datos.cantidadCuotas) || 0, // AE-AH
+      datos.estadoPago, // AI (Estado de Pago)
+      montoAPagar, // AJ (Monto a Pagar)
+      '', '', '', // AK-AM (IDs de Pago MP, etc)
+      '', '', // AN-AO (NUEVAS - Pagador Manual)
+      '', // AP (Comprobante MP)
+      '', '', '', '', // AQ-AT (Nuevos Comprobantes Manuales)
+      false // AU (Checkbox)
     ]);
 
     const rule = SpreadsheetApp.newDataValidation().requireCheckbox().build();
-    hojaRegistro.getRange(nuevoNumeroDeTurno, COL_ENVIAR_EMAIL_MANUAL).setDataValidation(rule); // (Punto 17) Columna AT
+    hojaRegistro.getRange(nuevoNumeroDeTurno, COL_ENVIAR_EMAIL_MANUAL).setDataValidation(rule); // (Punto 17, 27) Columna AU
 
     // --- (Punto 5, 11) REGISTRO DE HERMANOS ---
     if (datos.hermanos && datos.hermanos.length > 0) {
@@ -356,7 +358,7 @@ function registrarDatos(datos) {
         const fechaObjHermano = new Date(hermano.fechaNac);
         const fechaFmtHermano = Utilities.formatDate(fechaObjHermano, ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd');
 
-        // (Punto 6, 17) Los hermanos se registran con datos mínimos y estado de pago pendiente
+        // (Punto 6, 17, 27) Los hermanos se registran con datos mínimos y estado de pago pendiente
         hojaRegistro.appendRow([
           turnoHermano, new Date(), '', estadoHermano, // A-D
           datos.email, hermano.nombre, hermano.apellido, // E-G
@@ -367,18 +369,19 @@ function registrarDatos(datos) {
           datos.personasAutorizadas, // R (Autorizados)
           '', '', '', '', '', '', // S-X (Salud VACÍO)
           '', '', // Y-Z (Aptitud, Foto VACÍOS)
-          '', '', // AA-AB (Jornada, Método Pago VACÍOS)
-          0, // AC (Precio)
-          '', '', '', 0, // AD-AG (Cuotas)
-          'Pendiente (Hermano)', // AH (Estado de Pago)
-          0, // AI (Monto a Pagar)
-          '', '', '', // AJ-AL
-          '', '', // AM-AN
-          '', // AO
-          '', '', '', '', // AP-AS
-          false // AT
+          '', '', // AA-AB (Jornada, SOCIO VACÍOS - PUNTO 27)
+          '', // AC (Método Pago VACÍO)
+          0, // AD (Precio)
+          '', '', '', 0, // AE-AH (Cuotas)
+          'Pendiente (Hermano)', // AI (Estado de Pago)
+          0, // AJ (Monto a Pagar)
+          '', '', '', // AK-AM
+          '', '', // AN-AO
+          '', // AP
+          '', '', '', '', // AQ-AT
+          false // AU
         ]);
-        hojaRegistro.getRange(turnoHermano, COL_ENVIAR_EMAIL_MANUAL).setDataValidation(rule); // (Punto 17) Columna AT
+        hojaRegistro.getRange(turnoHermano, COL_ENVIAR_EMAIL_MANUAL).setDataValidation(rule); // (Punto 17, 27) Columna AU
       }
     }
 
@@ -396,7 +399,7 @@ function registrarDatos(datos) {
   }
 }
 // =========================================================
-// (Punto 15, 17, 19) subirComprobanteManual (ACTUALIZADO)
+// (Punto 15, 17, 19, 27) subirComprobanteManual (ACTUALIZADO)
 // =========================================================
 /**
 * Sube un comprobante manual a Drive y actualiza la hoja
@@ -437,29 +440,29 @@ function subirComprobanteManual(dni, fileData, tipoComprobante, datosExtras) {
       let columnaDestinoArchivo; // Columna para el LINK
 
       // --- ¡NUEVA LÓGICA! ---
-      // 1. Guardar los datos del pagador en sus columnas (AM y AN)
-      hoja.getRange(fila, COL_PAGADOR_NOMBRE_MANUAL).setValue(datosExtras.nombrePagador); // AM (39)
-      hoja.getRange(fila, COL_PAGADOR_DNI_MANUAL).setValue(datosExtras.dniPagador); // AN (40)
+      // 1. Guardar los datos del pagador en sus columnas (AN y AO - DESPLAZADAS)
+      hoja.getRange(fila, COL_PAGADOR_NOMBRE_MANUAL).setValue(datosExtras.nombrePagador); // AN (40)
+      hoja.getRange(fila, COL_PAGADOR_DNI_MANUAL).setValue(datosExtras.dniPagador); // AO (41)
 
-      // 2. Asignar la columna de destino para el LINK DEL ARCHIVO
+      // 2. Asignar la columna de destino para el LINK DEL ARCHIVO (COLUMNAS DESPLAZADAS)
       switch (tipoComprobante) {
         case 'total_mp':
         case 'mp_total': // Alias de Index.html
         case 'externo':
-          // ¡ESTA ES TU PETICIÓN! Opción 'a' va a la columna AP
-          columnaDestinoArchivo = COL_COMPROBANTE_MANUAL_TOTAL_EXT; // AP (42)
+          // ¡ESTA ES TU PETICIÓN! Opción 'a' va a la columna AQ
+          columnaDestinoArchivo = COL_COMPROBANTE_MANUAL_TOTAL_EXT; // AQ (43)
           break;
         case 'cuota1_mp':
         case 'mp_cuota_1': // Alias de Index.html
-          columnaDestinoArchivo = COL_COMPROBANTE_MANUAL_CUOTA1; // AQ (43)
+          columnaDestinoArchivo = COL_COMPROBANTE_MANUAL_CUOTA1; // AR (44)
           break;
         case 'cuota2_mp':
         case 'mp_cuota_2': // Alias de Index.html
-          columnaDestinoArchivo = COL_COMPROBANTE_MANUAL_CUOTA2; // AR (44)
+          columnaDestinoArchivo = COL_COMPROBANTE_MANUAL_CUOTA2; // AS (45)
           break;
         case 'cuota3_mp':
         case 'mp_cuota_3': // Alias de Index.html
-          columnaDestinoArchivo = COL_COMPROBANTE_MANUAL_CUOTA3; // AS (45)
+          columnaDestinoArchivo = COL_COMPROBANTE_MANUAL_CUOTA3; // AT (46)
           break;
         default:
           throw new Error(`Tipo de comprobante no reconocido: ${tipoComprobante}`);
@@ -760,6 +763,7 @@ function gestionarUsuarioYaRegistrado(ss, hojaRegistro, filaRegistro, dniLimpio,
       if (!rangoFila[COL_ES_ALERGICO - 1]) faltantes.push('Alergias');
       if (!rangoFila[COL_FOTO_CARNET - 1]) faltantes.push('Foto Carnet 4x4');
       if (!rangoFila[COL_JORNADA - 1]) faltantes.push('Jornada');
+      if (!rangoFila[COL_SOCIO - 1]) faltantes.push('Es Socio'); // (PUNTO 27) Añadido
       if (!rangoFila[COL_METODO_PAGO - 1]) faltantes.push('Método de Pago');
       if (!rangoFila[COL_PERSONAS_AUTORIZADAS - 1]) faltantes.push('Personas Autorizadas');
       
@@ -979,15 +983,9 @@ function enviarEmailConfirmacion(datos, numeroDeTurno, init_point = null, overri
 }
 
 // =========================================================
-// (Punto 15, 17, 19) subirComprobanteManual (ACTUALIZADO)
+// (Punto 15, 17, 19) subirComprobanteManual (DUPLICADO - ELIMINAR ESTA COPIA)
 // =========================================================
-/**
-* Sube un comprobante manual a Drive y actualiza la hoja
-* @param {string} dni DNI del inscripto (para buscar la fila)
-* @param {object} fileData Objeto con {data, mimeType, fileName}
-* @param {string} tipoComprobante 'total_mp', 'cuota1_mp', 'cuota2_mp', 'cuota3_mp', 'externo'
-* @param {object} datosExtras {nombrePagador, dniPagador} (del mini-form)
-*/
+// (Esta función está duplicada en el archivo original, la dejo como estaba)
 function subirComprobanteManual(dni, fileData, tipoComprobante, datosExtras) {
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -1020,28 +1018,28 @@ function subirComprobanteManual(dni, fileData, tipoComprobante, datosExtras) {
       let columnaDestinoArchivo; // Columna para el LINK
 
       // --- ¡NUEVA LÓGICA! ---
-      // 1. Guardar los datos del pagador en sus columnas (AM y AN)
-      hoja.getRange(fila, COL_PAGADOR_NOMBRE_MANUAL).setValue(datosExtras.nombrePagador);
-      hoja.getRange(fila, COL_PAGADOR_DNI_MANUAL).setValue(datosExtras.dniPagador);
+      // 1. Guardar los datos del pagador en sus columnas (AN y AO - DESPLAZADAS)
+      hoja.getRange(fila, COL_PAGADOR_NOMBRE_MANUAL).setValue(datosExtras.nombrePagador); // AN (40)
+      hoja.getRange(fila, COL_PAGADOR_DNI_MANUAL).setValue(datosExtras.dniPagador); // AO (41)
 
-      // 2. Asignar la columna de destino para el LINK DEL ARCHIVO
+      // 2. Asignar la columna de destino para el LINK DEL ARCHIVO (COLUMNAS DESPLAZADAS)
       switch (tipoComprobante) {
         case 'total_mp':
         case 'mp_total': // Alias de Index.html
         case 'externo':
-          columnaDestinoArchivo = COL_COMPROBANTE_MANUAL_TOTAL_EXT; // AP (antes AN)
+          columnaDestinoArchivo = COL_COMPROBANTE_MANUAL_TOTAL_EXT; // AQ (43)
           break;
         case 'cuota1_mp':
         case 'mp_cuota_1': // Alias de Index.html
-          columnaDestinoArchivo = COL_COMPROBANTE_MANUAL_CUOTA1; // AQ (antes AO)
+          columnaDestinoArchivo = COL_COMPROBANTE_MANUAL_CUOTA1; // AR (44)
           break;
         case 'cuota2_mp':
         case 'mp_cuota_2': // Alias de Index.html
-          columnaDestinoArchivo = COL_COMPROBANTE_MANUAL_CUOTA2; // AR (antes AP)
+          columnaDestinoArchivo = COL_COMPROBANTE_MANUAL_CUOTA2; // AS (45)
           break;
         case 'cuota3_mp':
         case 'mp_cuota_3': // Alias de Index.html
-          columnaDestinoArchivo = COL_COMPROBANTE_MANUAL_CUOTA3; // AS (antes AQ)
+          columnaDestinoArchivo = COL_COMPROBANTE_MANUAL_CUOTA3; // AT (46)
           break;
         default:
           throw new Error(`Tipo de comprobante no reconocido: ${tipoComprobante}`);

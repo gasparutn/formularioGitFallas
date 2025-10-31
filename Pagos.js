@@ -48,7 +48,7 @@ function paso1_registrarRegistro(datos) {
 }
 
 /**
-* (Punto 6, 12) NUEVA FUNCIÓN para actualizar un hermano
+* (Punto 6, 12, 27) NUEVA FUNCIÓN para actualizar un hermano (ACTUALIZADA)
 */
 function actualizarDatosHermano(datos) {
   const lock = LockService.getScriptLock();
@@ -92,7 +92,7 @@ function actualizarDatosHermano(datos) {
     const telResp2 = (datos.telAreaResp2 && datos.telNumResp2) ? `(${datos.telAreaResp2}) ${datos.telNumResp2}` : '';
     const marcaNE = (datos.jornada === 'Jornada Normal extendida' ? 'E' : 'N');
     
-    // (Punto 6) Actualizar la fila del hermano con los datos completos
+    // (Punto 6, 27) Actualizar la fila del hermano con los datos completos
     hojaRegistro.getRange(fila, COL_MARCA_N_E_A).setValue(marcaNE);
     hojaRegistro.getRange(fila, COL_EMAIL).setValue(datos.email);
     hojaRegistro.getRange(fila, COL_OBRA_SOCIAL).setValue(datos.obraSocial);
@@ -112,6 +112,7 @@ function actualizarDatosHermano(datos) {
     hojaRegistro.getRange(fila, COL_APTITUD_FISICA).setValue(datos.urlCertificadoAptitud || '');
     hojaRegistro.getRange(fila, COL_FOTO_CARNET).setValue(datos.urlFotoCarnet || '');
     hojaRegistro.getRange(fila, COL_JORNADA).setValue(datos.jornada);
+    hojaRegistro.getRange(fila, COL_SOCIO).setValue(datos.esSocio); // (PUNTO 27) NUEVA LÍNEA
     hojaRegistro.getRange(fila, COL_METODO_PAGO).setValue(datos.metodoPago);
     hojaRegistro.getRange(fila, COL_PRECIO).setValue(precio);
     hojaRegistro.getRange(fila, COL_CANTIDAD_CUOTAS).setValue(parseInt(datos.cantidadCuotas) || 0);
@@ -233,6 +234,7 @@ function crearPreferenciaDePago(datos, cuotaIdentificador = null, cantidadTotalC
     let externalReference;
 
     // --- LÓGICA DE BLOQUEO (Actualizada a nuevas columnas) ---
+    // (PUNTO 27) ESTA LÓGICA NO SE VE AFECTADA PORQUE LEE CONSTANTES QUE SE ACTUALIZAN AUTOMÁTICAMENTE
     if (hojaRegistro && hojaRegistro.getLastRow() > 1) {
       const rangoDni = hojaRegistro.getRange(2, COL_DNI_INSCRIPTO, hojaRegistro.getLastRow() - 1, 1);
       const celdaEncontrada = rangoDni.createTextFinder(dniLimpio).matchEntireCell(true).findNext();
@@ -351,6 +353,7 @@ function procesarNotificacionDePago(paymentId) {
     const hoja = ss.getSheetByName(NOMBRE_HOJA_REGISTRO);
     if (hoja && hoja.getLastRow() > 1) {
       // (Punto 5) Columna ID Pago MP actualizada
+      // (PUNTO 27) ESTA LÓGICA NO SE VE AFECTADA
       const rangoIds = hoja.getRange(2, COL_ID_PAGO_MP, hoja.getLastRow() - 1, 1);
       const finder = rangoIds.createTextFinder(String(paymentId).split(' ')[0]);
       const celdaEncontrada = finder.findNext();
@@ -430,7 +433,7 @@ function procesarNotificacionDePago(paymentId) {
 }
 
 // =========================================================
-// (Punto 5) actualizarEstadoEnPlanilla (ACTUALIZADO)
+// (Punto 5, 27) actualizarEstadoEnPlanilla (ACTUALIZADO)
 // =========================================================
 function actualizarEstadoEnPlanilla(dni, datosActualizacion) {
   const lock = LockService.getScriptLock();
@@ -443,6 +446,7 @@ function actualizarEstadoEnPlanilla(dni, datosActualizacion) {
       return;
     }
     // (Punto 2) Columna DNI actualizada
+    // (PUNTO 27) ESTA LÓGICA NO SE VE AFECTADA
     const rangoDni = hoja.getRange(2, COL_DNI_INSCRIPTO, hoja.getLastRow() - 1, 1);
     const celdaEncontrada = rangoDni.createTextFinder(String(dni).trim()).findNext();
 
@@ -454,6 +458,7 @@ function actualizarEstadoEnPlanilla(dni, datosActualizacion) {
       const rowData = rangoFila.getValues()[0];
 
       // --- BLOQUEO DE REPAGO ---
+      // (PUNTO 27) ESTA LÓGICA NO SE VE AFECTADA
       if (cuotaNum == null) {
         const estadoActual = rowData[COL_ESTADO_PAGO - 1];
         if (estadoActual && (estadoActual.toString().includes("Pagado") || estadoActual.toString().includes("Notificada"))) {
@@ -539,12 +544,12 @@ function actualizarEstadoEnPlanilla(dni, datosActualizacion) {
       }
 
       // Llamadas a los helpers (Columnas actualizadas)
-      // ESTA SECCIÓN SE ACTUALIZÓ CON LAS NUEVAS CONSTANTES
-      actualizarCelda_AnexarSiempre(COL_ID_PAGO_MP, datosActualizacion.idOperacion); // AJ (36)
-      actualizarCelda_AnexarSiempre(COL_COMPROBANTE_MP, datosActualizacion.urlComprobante); // AO (41)
-      actualizarCelda_AnexarSiDiferente(COL_PAGADOR_NOMBRE, datosActualizacion.nombrePagador); // AK (37)
-      // ¡CAMBIO CLAVE! Se usa la nueva constante para la columna AL (38)
-      actualizarCelda_AnexarSiDiferente(COL_DNI_PAGADOR_MP, datosActualizacion.dniPagador); // AL (38)
+      // (PUNTO 27) ESTA LÓGICA NO SE VE AFECTADA, LAS CONSTANTES SE DESPLAZAN SOLAS
+      actualizarCelda_AnexarSiempre(COL_ID_PAGO_MP, datosActualizacion.idOperacion); // AK (37)
+      actualizarCelda_AnexarSiempre(COL_COMPROBANTE_MP, datosActualizacion.urlComprobante); // AP (42)
+      actualizarCelda_AnexarSiDiferente(COL_PAGADOR_NOMBRE, datosActualizacion.nombrePagador); // AL (38)
+      // ¡CAMBIO CLAVE! Se usa la nueva constante para la columna AM (39)
+      actualizarCelda_AnexarSiDiferente(COL_DNI_PAGADOR_MP, datosActualizacion.dniPagador); // AM (39)
 
       if (cuotaNum != null) {
         const cantidadCuotasRegistrada = parseInt(hoja.getRange(fila, COL_CANTIDAD_CUOTAS).getValue()) || 3;
@@ -577,6 +582,7 @@ function actualizarEstadoEnPlanilla(dni, datosActualizacion) {
 // ========================================================================
 // (FUNCIONES DE EMAIL REVISADAS)
 // (Punto 2) Usan nombre/apellido
+// (PUNTO 27) ESTA LÓGICA NO SE VE AFECTADA
 // ========================================================================
 
 /* */

@@ -19,7 +19,7 @@
     <div id="validacion-seccion">
       <div class="form-section">
         <h3>Paso 1: Verificación de DNI</h3>
-       <label for="tipoInscripto">¿Es un nuevo inscripto o ya participó en la colonia anteriormente?</label>
+        <label for="tipoInscripto">¿Es un nuevo inscripto o ya participó en la colonia anteriormente?</label>
         <select id="tipoInscripto" name="tipoInscripto" required>
           <option value="nuevo">Soy Nuevo Inscripto</option>
           <option value="anterior">Soy Inscripto Anterior</option>
@@ -152,6 +152,17 @@
           <div class="loader-archivo" id="loader-foto"></div>
           <input type="hidden" id="urlFotoCarnet" name="urlFotoCarnet">
 
+          <div class="radio-group">
+            <label><strong>¿Es Socio del CLUB?</strong></label>
+            <label>
+    <input type="radio" name="esSocio" value="SÍ" class="form-cache" required>
+    <span style="color:red;">Sí</span>
+  </label>
+            <label>
+    <input type="radio" name="esSocio" value="NO" class="form-cache">
+    <span style="color:red;">No</span>
+  </label>
+          </div>
           <label for="jornada">Seleccione la Jornada:</label>
           <span id="jornada-cupo-msg" style="display: none; color: #dc3545; font-weight: bold; font-size: 0.9em; margin-left: 10px;">(No hay cupo Jornada Extendida)</span>
           <select id="jornada" name="jornada" class="form-cache" required>
