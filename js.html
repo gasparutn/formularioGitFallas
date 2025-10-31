@@ -342,10 +342,10 @@ function handleValidationSuccess(response) {
   } else if (response.status === 'ERROR_TIPO_NUEVO' || response.status === 'ERROR_TIPO_ANT' || response.status === 'YA_REGISTRADO' || response.status === 'ANULADO' || response.status === 'NO_ENCONTRADO_ANT') {
     statusDiv.innerHTML = `<div class="mensaje error"><strong>Aviso:</strong> ${response.message}</div>`;
   } else {
+    // ESTE ES EL BLOQUE DONDE ESTÁ CAYENDO TU ERROR DE 'HERMANO'
     statusDiv.innerHTML = `<div class="mensaje error"><strong>Aviso:</strong> ${response.message}</div>`;
   }
 }
-
 
 
 /**
@@ -421,9 +421,7 @@ function handleComprobanteUploadFailure(error) {
   if (btnFinalizar) btnFinalizar.disabled = false;
 }
 
-/**
- * (Punto 7, 25) Pre-rellena el formulario y bloquea campos de Pre-Venta
- */
+
 /**
  * (Punto 7, 25) Pre-rellena el formulario y bloquea campos de Pre-Venta
  */
@@ -535,6 +533,7 @@ function mostrarFormulario(response) {
   toggleCantidadCuotas();
   toggleTransferenciaInfo();
 }
+
 
 function comprimirYLeerArchivo(file) {
   const MAX_WIDTH = 1024;

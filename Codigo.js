@@ -395,7 +395,6 @@ function registrarDatos(datos) {
     lock.releaseLock();
   }
 }
-
 // =========================================================
 // (Punto 15, 17, 19) subirComprobanteManual (ACTUALIZADO)
 // =========================================================
@@ -889,8 +888,6 @@ function gestionarUsuarioYaRegistrado(ss, hojaRegistro, filaRegistro, dniLimpio,
       };
   }
 }
-
-
 // =========================================================
 // (Punto 10) enviarEmailConfirmacion (ACTUALIZADO)
 // =========================================================
