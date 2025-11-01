@@ -199,6 +199,7 @@ function doPost(e) {
 
 // =========================================================
 // (Punto 5, 11, 17, 24, 27) registrarDatos (ACTUALIZADO)
+// (NUEVA MODIFICACIÓN) Cálculo de 'nuevoNumeroDeTurno' robustecido
 // =========================================================
 /**
 * Guarda los datos finales en la hoja "Registros" (47 COLUMNAS)
@@ -255,6 +256,8 @@ function registrarDatos(datos) {
         'Comprobante Manual (C3)', // AT (antes AQ)
         'Enviar Email?' // AU (antes AR)
       ]);
+      // (NUEVA MODIFICACIÓN) Asignar el primer turno como 2 si la hoja es nueva
+      hojaRegistro.getRange("A2").setValue(2);
     }
 
     // --- CÁLCULO DE PRECIOS ---
@@ -280,7 +283,25 @@ function registrarDatos(datos) {
 
 
     // --- REGISTRO DEL INSCRIPTO PRINCIPAL ---
-    const nuevoNumeroDeTurno = hojaRegistro.getLastRow() + 1;
+    
+    // (NUEVA MODIFICACIÓN) Cálculo robusto del próximo N° de Turno
+    const lastRow = hojaRegistro.getLastRow();
+    let ultimoTurno = 0;
+    if (lastRow > 1) {
+      // Obtener todos los valores de la Col A (desde la fila 2)
+      const rangoTurnos = hojaRegistro.getRange(2, COL_NUMERO_TURNO, lastRow - 1, 1).getValues();
+      const turnosReales = rangoTurnos.map(f => f[0]).filter(Number); // Filtra vacíos/texto y quédate con números
+      
+      if (turnosReales.length > 0) {
+        ultimoTurno = Math.max(...turnosReales); // Encuentra el número más alto
+      } else {
+        ultimoTurno = 1; // No se encontraron números, pero la fila 1 es header
+      }
+    } else {
+      ultimoTurno = 1; // Solo está la fila de header
+    }
+    const nuevoNumeroDeTurno = ultimoTurno + 1; // Si el max es 10, el nuevo es 11. Si no hay datos (solo header), lastRow=1, ultimoTurno=1, el nuevo es 2.
+
 
     const edadCalculada = calcularEdad(datos.fechaNacimiento);
     const edadFormateada = `${edadCalculada.anos}a, ${edadCalculada.meses}m, ${edadCalculada.dias}d`;
@@ -309,7 +330,7 @@ function registrarDatos(datos) {
     const telResp2 = (datos.telAreaResp2 && datos.telNumResp2) ? `(${datos.telAreaResp2}) ${datos.telNumResp2}` : '';
 
     // (Punto 17, 27) appendRow actualizado para 47 columnas
-    hojaRegistro.appendRow([
+    const filaNueva = [
       nuevoNumeroDeTurno, new Date(), marcaNE, estadoInscripto, // A-D
       datos.email, datos.nombre, datos.apellido, // E-G
       fechaFormateada, edadFormateada, dniBuscado, // H-J
@@ -330,16 +351,23 @@ function registrarDatos(datos) {
       '', // AP (Comprobante MP)
       '', '', '', '', // AQ-AT (Nuevos Comprobantes Manuales)
       false // AU (Checkbox)
-    ]);
+    ];
+    hojaRegistro.appendRow(filaNueva);
+    const filaInsertada = hojaRegistro.getLastRow(); // Obtener la fila recién insertada
 
     const rule = SpreadsheetApp.newDataValidation().requireCheckbox().build();
-    hojaRegistro.getRange(nuevoNumeroDeTurno, COL_ENVIAR_EMAIL_MANUAL).setDataValidation(rule); // (Punto 17, 27) Columna AU
+    hojaRegistro.getRange(filaInsertada, COL_ENVIAR_EMAIL_MANUAL).setDataValidation(rule); // (Punto 17, 27) Columna AU
 
     // --- (Punto 5, 11) REGISTRO DE HERMANOS ---
     if (datos.hermanos && datos.hermanos.length > 0) {
       const hojaBusqueda = ss.getSheetByName(NOMBRE_HOJA_BUSQUEDA);
+      
+      // (NUEVA MODIFICACIÓN) El próximo turno de hermano debe continuar desde el principal
+      let proximoTurnoHermano = nuevoNumeroDeTurno; 
 
       for (const hermano of datos.hermanos) {
+        proximoTurnoHermano++; // Incrementar el turno para este hermano
+        
         const dniHermano = limpiarDNI(hermano.dni);
         if (!dniHermano || !hermano.nombre || !hermano.apellido || !hermano.fechaNac) continue; // Saltar si faltan datos
 
@@ -353,15 +381,14 @@ function registrarDatos(datos) {
           }
         }
 
-        const turnoHermano = hojaRegistro.getLastRow() + 1;
         const edadCalcHermano = calcularEdad(hermano.fechaNac);
         const edadFmtHermano = `${edadCalcHermano.anos}a, ${edadCalcHermano.meses}m, ${edadCalcHermano.dias}d`;
         const fechaObjHermano = new Date(hermano.fechaNac);
         const fechaFmtHermano = Utilities.formatDate(fechaObjHermano, ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd');
 
         // (Punto 6, 17, 27) Los hermanos se registran con datos mínimos y estado de pago pendiente
-        hojaRegistro.appendRow([
-          turnoHermano, new Date(), '', estadoHermano, // A-D
+        const filaHermano = [
+          proximoTurnoHermano, new Date(), '', estadoHermano, // A-D
           datos.email, hermano.nombre, hermano.apellido, // E-G
           fechaFmtHermano, edadFmtHermano, dniHermano, // H-J
           '', '', // K-L (Obra social, Colegio VACÍOS)
@@ -381,8 +408,10 @@ function registrarDatos(datos) {
           '', // AP
           '', '', '', '', // AQ-AT
           false // AU
-        ]);
-        hojaRegistro.getRange(turnoHermano, COL_ENVIAR_EMAIL_MANUAL).setDataValidation(rule); // (Punto 17, 27) Columna AU
+        ];
+        hojaRegistro.appendRow(filaHermano);
+        const filaHermanoInsertada = hojaRegistro.getLastRow();
+        hojaRegistro.getRange(filaHermanoInsertada, COL_ENVIAR_EMAIL_MANUAL).setDataValidation(rule); // (Punto 17, 27) Columna AU
       }
     }
 
@@ -550,6 +579,7 @@ function calcularEdad(fechaNacimientoStr) {
 }
 
 /* */
+// (NUEVA MODIFICACIÓN) 'registrosActuales' se calcula contando la Columna A
 function obtenerEstadoRegistro() {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -563,12 +593,21 @@ function obtenerEstadoRegistro() {
 
     let registrosActuales = 0;
     let registrosJornadaExtendida = 0;
+    
     if (hojaRegistro && hojaRegistro.getLastRow() > 1) {
-      registrosActuales = hojaRegistro.getLastRow() - 1;
-      const data = hojaRegistro.getRange(2, COL_MARCA_N_E_A, registrosActuales, 1).getValues();
-      registrosJornadaExtendida = data.filter(row => row[0] === 'E').length;
+      const lastRow = hojaRegistro.getLastRow();
+      
+      // (NUEVA MODIFICACIÓN) Contar registros basados en la Columna A (N° de Turno)
+      const rangoTurnos = hojaRegistro.getRange(2, COL_NUMERO_TURNO, lastRow - 1, 1);
+      const valoresTurnos = rangoTurnos.getValues();
+      registrosActuales = valoresTurnos.filter(fila => fila[0] != null && fila[0] != "").length;
+      
+      // El conteo de Jornada Extendida sigue igual
+      const data = hojaRegistro.getRange(2, COL_MARCA_N_E_A, lastRow - 1, 1).getValues();
+      registrosJornadaExtendida = data.filter(row => String(row[0]).startsWith('Extendida')).length;
     }
 
+    // Escribir el conteo robusto en la celda B2
     hojaConfig.getRange('B2').setValue(registrosActuales);
     hojaConfig.getRange('B5').setValue(registrosJornadaExtendida);
     SpreadsheetApp.flush();
@@ -970,6 +1009,8 @@ function enviarEmailConfirmacion(datos, numeroDeTurno, init_point = null, overri
       return;
     }
 
+    // (Punto 29) DESACTIVADO
+    /*
     MailApp.sendEmail({
       to: datos.email,
       subject: `${asunto} (Turno #${numeroDeTurno})`,
@@ -977,6 +1018,9 @@ function enviarEmailConfirmacion(datos, numeroDeTurno, init_point = null, overri
     });
 
     Logger.log(`Correo enviado a ${datos.email} por ${datos.metodoPago}.`);
+    */
+    Logger.log(`(Punto 29) Envío de email automático a ${datos.email} DESACTIVADO.`);
+
 
   } catch (e) {
     Logger.log("Error al enviar correo (enviarEmailConfirmacion): " + e.message);

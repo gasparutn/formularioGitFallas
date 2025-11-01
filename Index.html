@@ -170,15 +170,15 @@
 <option value="Jornada Normal">Jornada Normal</option>
 <option value="Jornada Normal extendida" id="opcion-jornada-extendida">Jornada Normal Extendida</option>
 </select>
-
+          
           <label for="metodoPago">Seleccione el Método de Pago</label>
           <select id="metodoPago" name="metodoPago" class="form-cache" required>
-<option value="">-- Por favor, elija una opción --</option>
-<option value="Pago 1 Cuota Deb/Cred MP(Total)">Pago 1 Cuota Deb/Cred MP(Total)</option>
-<option value="Pago en Cuotas">Pago en Cuotas (Online)</option>
-<option value="Pago Efectivo (Adm del Club)">Pago Efectivo (Adm del Club)</option>
-<option value="Transferencia">Transferencia</option>
-</select>
+            <option value="">-- Por favor, elija una opción --</option>
+            <option value="Pago 1 Cuota Deb/Cred MP(Total)">Pago 1 Cuota Deb/Cred MP(Total)</option>
+            <option value="Pago en Cuotas">Pago en 3 Cuotas</option> 
+            <option value="Pago Efectivo (Adm del Club)">Pago Efectivo (Adm del Club)</option>
+            <option value="Transferencia">Transferencia</option>
+          </select>
 
           <div id="transferencia-info">
             <p>TITULAR DE LA CUENTA: <strong>Walter Jonas Marrello</strong></p>
@@ -187,16 +187,8 @@
             <p style="margin-top: 10px; font-size: 0.9em;">Luego de transferir, deberá volver a ingresar con su DNI para
               subir el comprobante.</p>
           </div>
-
-          <div id="cantidadCuotasContainer">
-            <label for="cantidadCuotas">Seleccione la cantidad de cuotas</label>
-            <select id="cantidadCuotas" name="cantidadCuotas" class="form-cache" required>
-<option value="">-- Seleccione --</option>
-<option value="2">2 Cuotas</option>
-<option value="3">3 Cuotas</option>
-</select>
+          
           </div>
-        </div>
 
         <button type="submit" id="submit-button">Registrar y Continuar</button>
         <button type="button" id="btn-limpiar-form">VOLVER (Limpiar Formulario)</button>

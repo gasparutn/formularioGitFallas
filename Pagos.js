@@ -12,6 +12,7 @@ const MP_API_URL = 'https://api.mercadopago.com/checkout/preferences';
 /**
 * (PASO 1)
 * (Punto 10) Añadida lógica para "Transferencia"
+* (Punto 28) Lógica de "Pago en Cuotas" ajustada para "Pago en 3 Cuotas"
 */
 function paso1_registrarRegistro(datos) {
   Logger.log("PASO 1 INICIADO. Datos recibidos: " + JSON.stringify(datos));
@@ -26,8 +27,9 @@ function paso1_registrarRegistro(datos) {
       datos.estadoPago = "Pendiente (Efectivo)";
     } else if (datos.metodoPago === 'Transferencia') {
       datos.estadoPago = "Pendiente (Transferencia)"; // NUEVO
-    } else if (datos.metodoPago === 'Pago en Cuotas') {
-      datos.estadoPago = `Pendiente (${datos.cantidadCuotas} Cuotas)`;
+    // (Punto 28) Ajuste de "Pago en Cuotas" a "Pago en 3 Cuotas" (o mantener "Pago en Cuotas" si el valor enviado no cambió)
+    } else if (datos.metodoPago === 'Pago en Cuotas') { 
+      datos.estadoPago = `Pendiente (${datos.cantidadCuotas} Cuotas)`; // (datos.cantidadCuotas será 3)
     } else { // 'Pago 1 Cuota Deb/Cred MP(Total)'
       datos.estadoPago = "Pendiente";
     }
@@ -76,9 +78,10 @@ function actualizarDatosHermano(datos) {
     let precio = 0;
     let montoAPagar = 0;
     try {
+      // (Punto 28) Ajustado
       if (datos.metodoPago === 'Pago en Cuotas') {
         precio = hojaConfig.getRange("B20").getValue();
-        montoAPagar = precio * (parseInt(datos.cantidadCuotas) || 0);
+        montoAPagar = precio * (parseInt(datos.cantidadCuotas) || 0); // (será 3)
       } else if (datos.metodoPago === 'Pago 1 Cuota Deb/Cred MP(Total)') {
         precio = hojaConfig.getRange("B14").getValue();
         montoAPagar = precio;
@@ -116,7 +119,7 @@ function actualizarDatosHermano(datos) {
     hojaRegistro.getRange(fila, COL_SOCIO).setValue(datos.esSocio); // (PUNTO 27) NUEVA LÍNEA
     hojaRegistro.getRange(fila, COL_METODO_PAGO).setValue(datos.metodoPago);
     hojaRegistro.getRange(fila, COL_PRECIO).setValue(precio);
-    hojaRegistro.getRange(fila, COL_CANTIDAD_CUOTAS).setValue(parseInt(datos.cantidadCuotas) || 0);
+    hojaRegistro.getRange(fila, COL_CANTIDAD_CUOTAS).setValue(parseInt(datos.cantidadCuotas) || 0); // (será 3)
     hojaRegistro.getRange(fila, COL_ESTADO_PAGO).setValue(datos.estadoPago);
     hojaRegistro.getRange(fila, COL_MONTO_A_PAGAR).setValue(montoAPagar);
 
@@ -140,6 +143,7 @@ function actualizarDatosHermano(datos) {
 /**
 * (PASO 2)
 * (Punto 10) Añadida lógica para "Transferencia"
+* (Punto 29) Emails automáticos desactivados
 */
 function paso2_crearPagoYEmail(datos, numeroDeTurno) {
   try {
@@ -149,13 +153,15 @@ function paso2_crearPagoYEmail(datos, numeroDeTurno) {
 
     if (pagosHabilitados === false) {
       Logger.log(`Pagos deshabilitados (Config B23). Registrando sin link!!`);
-      enviarEmailConfirmacion(datos, numeroDeTurno, null, 'registro_sin_pago');
+      // (Punto 29) Email automático desactivado.
+      // enviarEmailConfirmacion(datos, numeroDeTurno, null, 'registro_sin_pago');
       return { status: 'OK_REGISTRO_SIN_PAGO', message: `¡Inscripción registrada!! Los pagos online están momentáneamente desactivados.\nPor favor, acérquese a la administración.` };
     }
 
     // (Punto 10) Manejar Efectivo y Transferencia
     if (datos.metodoPago === 'Pago Efectivo (Adm del Club)' || datos.metodoPago === 'Transferencia') {
-      enviarEmailConfirmacion(datos, numeroDeTurno); // Enviar email (Efectivo o Transferencia)
+      // (Punto 29) Email automático desactivado.
+      // enviarEmailConfirmacion(datos, numeroDeTurno); // Enviar email (Efectivo o Transferencia)
       let message = (datos.metodoPago === 'Transferencia') ? 
           '¡Registro exitoso! Por favor, realice la transferencia y luego suba el comprobante.' :
           '¡Registro exitoso! Por favor, acérquese a la administración para completar el pago.';
@@ -177,18 +183,20 @@ function paso2_crearPagoYEmail(datos, numeroDeTurno) {
       }
 
       if (datos.email && init_point) {
-        enviarEmailConfirmacion(datos, numeroDeTurno, init_point);
+        // (Punto 29) Email automático desactivado.
+        // enviarEmailConfirmacion(datos, numeroDeTurno, init_point);
       }
       return { status: 'OK_PAGO', init_point: init_point };
     }
 
+    // (Punto 28) Ajustado
     if (datos.metodoPago === 'Pago en Cuotas') {
-      const cantidadCuotas = parseInt(datos.cantidadCuotas);
+      const cantidadCuotas = parseInt(datos.cantidadCuotas); // (Será 3)
       const emailLinks = {}; 
 
       try {
         // (Punto 10) Lógica de 2 o 3 cuotas
-        const cuotasDisponibles = (cantidadCuotas === 2) ? [1, 2] : [1, 2, 3];
+        const cuotasDisponibles = (cantidadCuotas === 2) ? [1, 2] : [1, 2, 3]; // (Será 3)
         
         for (let i = 1; i <= 3; i++) {
             if (cuotasDisponibles.includes(i)) {
@@ -205,7 +213,8 @@ function paso2_crearPagoYEmail(datos, numeroDeTurno) {
       }
 
       if (datos.email) {
-        enviarEmailConfirmacion(datos, numeroDeTurno, emailLinks);
+        // (Punto 29) Email automático desactivado.
+        // enviarEmailConfirmacion(datos, numeroDeTurno, emailLinks);
       }
 
       const primerLink = emailLinks.link1;
@@ -470,7 +479,7 @@ function actualizarEstadoEnPlanilla(dni, datosActualizacion) {
         // (Punto 5) Guardar monto pagado
         hoja.getRange(fila, COL_MONTO_A_PAGAR).setValue(datosActualizacion.montoPagado);
         Logger.log(`Éxito: Fila ${fila} (Pago Total) actualizada para DNI ${dni}.`);
-        enviarEmailPagoConfirmado(rowData);
+        enviarEmailPagoConfirmado(rowData); // (Punto 29) Este email SÍ se envía
 
       } else {
         const cuotaIndex = parseInt(cuotaNum.replace('C',''));
@@ -568,7 +577,7 @@ function actualizarEstadoEnPlanilla(dni, datosActualizacion) {
         if (cuotasPagadas === cantidadCuotasRegistrada) {
           hoja.getRange(fila, COL_ESTADO_PAGO).setValue("Pagado");
           Logger.log(`DNI ${dni}: ¡Todas las cuotas pagadas! Estado general actualizado.`);
-          enviarEmailInscripcionCompleta(rowData);
+          enviarEmailInscripcionCompleta(rowData); // (Punto 29) Este email SÍ se envía
         }
       }
     } else {
@@ -584,6 +593,7 @@ function actualizarEstadoEnPlanilla(dni, datosActualizacion) {
 // (FUNCIONES DE EMAIL REVISADAS)
 // (Punto 2) Usan nombre/apellido
 // (PUNTO 27) ESTA LÓGICA NO SE VE AFECTADA
+// (Punto 29) ESTAS FUNCIONES SIGUEN ACTIVAS
 // ========================================================================
 
 /* */
