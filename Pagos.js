@@ -14,6 +14,7 @@ const MP_API_URL = 'https://api.mercadopago.com/checkout/preferences';
 * (Punto 10) Añadida lógica para "Transferencia"
 */
 function paso1_registrarRegistro(datos) {
+  Logger.log("PASO 1 INICIADO. Datos recibidos: " + JSON.stringify(datos));
   try {
     if (!datos.urlFotoCarnet && !datos.esHermanoCompletando) { // (Punto 6) Los hermanos no suben foto en el registro inicial
       Logger.log("Error: El formulario se envió sin la URL de la Foto Carnet.");

@@ -208,6 +208,7 @@ function doPost(e) {
 * (Punto 27) Añadida columna SOCIO (AB).
 */
 function registrarDatos(datos) {
+  Logger.log("REGISTRAR DATOS INICIADO. Datos: " + JSON.stringify(datos));
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(60000);
