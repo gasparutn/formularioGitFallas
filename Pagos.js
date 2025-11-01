@@ -6,7 +6,7 @@ const MP_API_URL = 'https://api.mercadopago.com/checkout/preferences';
 
 // =========================================================
 // Las constantes (COL_EMAIL, COL_ESTADO_PAGO, etc.) se leen
-// automáticamente desde el archivo 'codigo.gs'.
+// automáticamente desde el archivo 'Constantes.gs'.
 // =========================================================
 
 /**
@@ -50,6 +50,51 @@ function paso1_registrarRegistro(datos) {
   }
 }
 
+// =========================================================
+// (NUEVA FUNCIÓN HELPER para solucionar error de 'hermano')
+// =========================================================
+/**
+ * Obtiene el precio y el monto a pagar desde la hoja de Config.
+ * @param {string} metodoPago - El método de pago seleccionado.
+ * @param {string|number} cantidadCuotasStr - La cantidad de cuotas (ej. "3").
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} hojaConfig - La hoja de "Config".
+ * @returns {{precio: number, montoAPagar: number}}
+ */
+function obtenerPrecioDesdeConfig(metodoPago, cantidadCuotasStr, hojaConfig) {
+  let precio = 0;
+  let montoAPagar = 0;
+  try {
+    const precioCuota = hojaConfig.getRange("B20").getValue();
+    const precioTotal = hojaConfig.getRange("B14").getValue();
+
+    if (metodoPago === 'Pago en Cuotas') {
+      precio = precioCuota;
+      montoAPagar = precio * (parseInt(cantidadCuotasStr) || 0);
+    } else if (metodoPago === 'Pago 1 Cuota Deb/Cred MP(Total)') {
+      precio = precioTotal;
+      montoAPagar = precio;
+    } else if (metodoPago === 'Pago Efectivo (Adm del Club)' || metodoPago === 'Transferencia') {
+      precio = precioTotal; 
+      montoAPagar = precio;
+    }
+
+    // Fallbacks
+    if (precio === 0 && precioTotal > 0) {
+      precio = precioTotal;
+    }
+    if (montoAPagar === 0 && precio > 0 && (metodoPago === 'Pago Efectivo (Adm del Club)' || metodoPago === 'Transferencia')) {
+      montoAPagar = precio;
+    }
+    
+    return { precio, montoAPagar };
+
+  } catch (e) {
+    Logger.log("Error en obtenerPrecioDesdeConfig: " + e.message);
+    return { precio: 0, montoAPagar: 0 };
+  }
+}
+
+
 /**
 * (Punto 6, 12, 27) NUEVA FUNCIÓN para actualizar un hermano (ACTUALIZADA)
 */
@@ -75,26 +120,23 @@ function actualizarDatosHermano(datos) {
     const fila = celdaEncontrada.getRow();
     
     // --- CÁLCULO DE PRECIOS ---
-    let precio = 0;
-    let montoAPagar = 0;
-    try {
-      // (Punto 28) Ajustado
-      if (datos.metodoPago === 'Pago en Cuotas') {
-        precio = hojaConfig.getRange("B20").getValue();
-        montoAPagar = precio * (parseInt(datos.cantidadCuotas) || 0); // (será 3)
-      } else if (datos.metodoPago === 'Pago 1 Cuota Deb/Cred MP(Total)') {
-        precio = hojaConfig.getRange("B14").getValue();
-        montoAPagar = precio;
-      }
-      if (precio === 0) precio = hojaConfig.getRange("B14").getValue();
-      if (montoAPagar === 0 && (datos.metodoPago === 'Pago Efectivo (Adm del Club)' || datos.metodoPago === 'Transferencia')) {
-         montoAPagar = precio;
-      }
-    } catch(e) { Logger.log("Error al leer precios: " + e.message); }
+    // (MODIFICACIÓN) Llamada a la nueva función helper para solucionar el error 'obtenerPrecioDesdeConfig is not defined'
+    const { precio, montoAPagar } = obtenerPrecioDesdeConfig(datos.metodoPago, datos.cantidadCuotas, hojaConfig);
 
     const telResp1 = `(${datos.telAreaResp1}) ${datos.telNumResp1}`;
     const telResp2 = (datos.telAreaResp2 && datos.telNumResp2) ? `(${datos.telAreaResp2}) ${datos.telNumResp2}` : '';
-    const marcaNE = (datos.jornada === 'Jornada Normal extendida' ? 'E' : 'N');
+    
+    // --- (MODIFICACIÓN) ---
+    // Reemplazada la lógica de 'E'/'N' por la lógica completa.
+    const esPreventa = (datos.tipoInscripto === 'preventa');
+    let marcaNE = "";
+    if (datos.jornada === 'Jornada Normal extendida') {
+      marcaNE = esPreventa ? "Extendida (Pre-venta)" : "Extendida";
+    } else { // Asume "Jornada Normal"
+      marcaNE = esPreventa ? "Normal (Pre-Venta)" : "Normal";
+    }
+    // --- (FIN MODIFICACIÓN) ---
+
     
     // (Punto 6, 27) Actualizar la fila del hermano con los datos completos
     hojaRegistro.getRange(fila, COL_MARCA_N_E_A).setValue(marcaNE);
@@ -506,7 +548,7 @@ function actualizarEstadoEnPlanilla(dni, datosActualizacion) {
 
       const isCuotaPayment = cuotaNum !== null;
 
-      function actualizarCelda_AnexarSiempre(columna, nuevoValor) {
+      function actualizarCelda_AnexarSempre(columna, nuevoValor) {
         const celda = hoja.getRange(fila, columna);
         let nuevoValorStr = String(nuevoValor).trim();
 
@@ -555,8 +597,8 @@ function actualizarEstadoEnPlanilla(dni, datosActualizacion) {
 
       // Llamadas a los helpers (Columnas actualizadas)
       // (PUNTO 27) ESTA LÓGICA NO SE VE AFECTADA, LAS CONSTANTES SE DESPLAZAN SOLAS
-      actualizarCelda_AnexarSiempre(COL_ID_PAGO_MP, datosActualizacion.idOperacion); // AK (37)
-      actualizarCelda_AnexarSiempre(COL_COMPROBANTE_MP, datosActualizacion.urlComprobante); // AP (42)
+      actualizarCelda_AnexarSempre(COL_ID_PAGO_MP, datosActualizacion.idOperacion); // AK (37)
+      actualizarCelda_AnexarSempre(COL_COMPROBANTE_MP, datosActualizacion.urlComprobante); // AP (42)
       actualizarCelda_AnexarSiDiferente(COL_PAGADOR_NOMBRE, datosActualizacion.nombrePagador); // AL (38)
       // ¡CAMBIO CLAVE! Se usa la nueva constante para la columna AM (39)
       actualizarCelda_AnexarSiDiferente(COL_DNI_PAGADOR_MP, datosActualizacion.dniPagador); // AM (39)

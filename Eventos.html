@@ -1,0 +1,268 @@
+<script>
+// =========================================================
+// (NUEVO ARCHIVO) LISTENERS DE EVENTOS
+// =========================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  // --- INICIO DE LISTENERS MOVIDOS ---
+
+  
+
+  document.getElementById('btn-validar').addEventListener('click', function() {
+    const dni = document.getElementById('dni-input').value;
+    const tipo = document.getElementById('tipoInscripto').value;
+    if (!dni) {
+      document.getElementById('status-validacion').innerHTML = '<div class="mensaje error">Por favor, ingrese un DNI.</div>';
+      return;
+    }
+    document.getElementById('btn-validar').disabled = true;
+    document.getElementById('loader-validacion').style.display = 'block';
+    document.getElementById('status-validacion').innerHTML = '';
+    google.script.run
+      .withSuccessHandler(handleValidationSuccess)
+      .withFailureHandler(handleValidationFailure)
+      .validarAcceso(dni, tipo);
+  });
+
+  document.getElementById('fotoCarnet').addEventListener('change', function() {
+    manejarSubidaArchivo(this, 'foto', 'fotoCarnetName', 'loader-foto', 'urlFotoCarnet');
+  });
+  document.getElementById('certificadoAptitud').addEventListener('change', function() {
+    manejarSubidaArchivo(this, 'ficha', 'certificadoAptitudName', 'loader-certificado', 'urlCertificadoAptitud');
+  });
+
+  // (PUNTO 30) CORRECCIÓN: El listener se adjunta aquí al cargar la página y se cambia a 'input'
+  document.getElementById('fechaNacimiento').addEventListener('input', calcularYMostrarEdad);
+
+  document.querySelectorAll('input[name="practicaDeporte"]').forEach(el => el.addEventListener('change', () => toggleEspecifique('practicaDeporte', 'especifiqueDeporte')));
+  document.querySelectorAll('input[name="tieneEnfermedad"]').forEach(el => el.addEventListener('change', () => toggleEspecifique('tieneEnfermedad', 'especifiqueEnfermedad')));
+  document.querySelectorAll('input[name="esAlergico"]').forEach(el => el.addEventListener('change', () => toggleEspecifique('esAlergico', 'especifiqueAlergia')));
+
+  // (Punto 28) Restaurado: Listener de Pago (solo para Transferencia)
+  document.getElementById('metodoPago').addEventListener('change', () => {
+    // toggleCantidadCuotas(); // Sigue eliminada
+    toggleTransferenciaInfo();
+    toggleCuotasInfo();
+  });
+  // (Punto 28) Restaurado: Copiar Alias
+  document.getElementById('btn-copiar-alias').addEventListener('click', function() {
+    const alias = document.getElementById('alias-transferencia').textContent;
+    navigator.clipboard.writeText(alias).then(() => {
+      this.textContent = '¡Copiado!';
+      setTimeout(() => { this.textContent = 'Copiar Alias'; }, 2000);
+    }).catch(err => {
+      alert('Error al copiar: ' + err);
+    });
+  });
+
+
+  // (Punto 9) Listener Autorizado
+  document.getElementById('btn-add-autorizado').addEventListener('click', function() {
+    addAutorizadoCampos();
+    guardarFormEnCache();
+  });
+
+  // (Punto 5) Listener Hermano
+  document.getElementById('btn-add-hermano').addEventListener('click', function() {
+    addHermanoCampos();
+    guardarFormEnCache();
+  });
+
+  // =========================================================
+  // (CORRECCIÓN 8 - LISTENER DE SUBMIT)
+  // =========================================================
+  document.getElementById('registroForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const submitButton = document.getElementById('submit-button');
+    const loader = document.getElementById('loader-registro');
+    const statusDiv = document.getElementById('status-registro');
+
+    // --- Función helper para manejar fallos de validación ---
+    function validationFail(message, elementToFocus, isHtml = false) {
+      if (isHtml) {
+        statusDiv.innerHTML = `<div class="mensaje error">${message}</div>`;
+      } else {
+        alert(message);
+      }
+      
+      if (elementToFocus) {
+        elementToFocus.focus();
+      }
+      
+      submitButton.disabled = false;
+      loader.style.display = 'none';
+    }
+    
+    try {
+      // --- Iniciar proceso de submit ---
+      submitButton.disabled = true;
+      loader.style.display = 'block';
+      loader.querySelector('p').textContent = 'Validando datos...';
+      statusDiv.innerHTML = '';
+      
+      const form = e.target;
+
+      // --- 1. Validación Autorizados ---
+      const nombresAut = document.querySelectorAll('.autorizado-nombre');
+      const dnisAut = document.querySelectorAll('.autorizado-dni');
+      let autorizadosValidos = 0;
+      let primerInputVacio = null;
+
+      if (nombresAut.length === 0) {
+        // Si el contenedor está vacío (nunca debería pasar por el DOMContentLoaded, pero por si acaso)
+        return validationFail('Error: Debe agregar al menos una persona autorizada.', document.getElementById('btn-add-autorizado'));
+      }
+      
+      for (let i = 0; i < nombresAut.length; i++) {
+          const nombre = nombresAut[i].value.trim();
+          const dni = dnisAut[i] ? dnisAut[i].value.trim() : ''; // <-- Chequeo de seguridad
+          
+          if (nombre && dni) {
+              autorizadosValidos++;
+          } else if ((nombre && !dni) || (!nombre && dni)) {
+              return validationFail('Error: Por favor complete tanto el Nombre como el DNI para la persona autorizada.', (nombre ? dnisAut[i] : nombresAut[i]));
+          }
+          if (!nombre && !primerInputVacio) {
+              primerInputVacio = nombresAut[i];
+          }
+      }
+
+      if (autorizadosValidos === 0) {
+          return validationFail('Error: Debe ingresar al menos una persona autorizada (Nombre y DNI).', primerInputVacio);
+      }
+
+      // --- 2. Validación 'Especifique' ---
+      if (document.querySelector('input[name="practicaDeporte"]:checked')?.value === 'Sí' && !document.getElementById('especifiqueDeporte').value) {
+        return validationFail('Debe especificar qué deporte practica.', document.getElementById('especifiqueDeporte'));
+      }
+      if (document.querySelector('input[name="tieneEnfermedad"]:checked')?.value === 'Sí' && !document.getElementById('especifiqueEnfermedad').value) {
+        return validationFail('Debe especificar la enfermedad o medicación.', document.getElementById('especifiqueEnfermedad'));
+      }
+      if (document.querySelector('input[name="esAlergico"]:checked')?.value === 'Sí' && !document.getElementById('especifiqueAlergia').value) {
+        return validationFail('Debe especificar la alergia.', document.getElementById('especifiqueAlergia'));
+      }
+
+      // --- 3. Validación Radios Requeridos ---
+      const radiosRequeridos = [
+        { name: 'practicaDeporte', label: '¿Practica algún deporte...?' },
+        { name: 'tieneEnfermedad', label: '¿Tiene alguna enfermedad...?' },
+        { name: 'esAlergico', label: '¿Es alérgico/a a algo?' },
+        { name: 'esSocio', label: '¿Es Socio del CLUB?' }
+      ];
+
+      for (const radio of radiosRequeridos) {
+        const checked = document.querySelector(`input[name="${radio.name}"]:checked`);
+        if (!checked) {
+          const labelEl = document.querySelector(`input[name="${radio.name}"]`).closest('.radio-group').querySelector('label');
+          const friendlyName = labelEl ? labelEl.textContent.replace(':', '') : radio.name;
+          return validationFail(`Error: Debe seleccionar una opción para "${friendlyName}".`, document.querySelector(`input[name="${radio.name}"]`));
+        }
+      }
+      
+      loader.querySelector('p').textContent = 'Recolectando datos...';
+
+      // --- 4. Recolección de Datos ---
+      const formDataObject = {};
+      document.querySelectorAll('.form-cache').forEach(el => {
+        const key = el.id || el.name;
+        
+        if (!key) return; 
+
+        if (el.disabled) {
+          // Recolectar manually campos deshabilitados (como 'jornada' en Pre-Venta)
+          if (el.id === 'jornada') {
+              formDataObject['jornada'] = el.value;
+          }
+          return; 
+        }
+
+        if (el.type === 'radio') {
+          if (el.checked) {
+            formDataObject[key] = el.value;
+          }
+        } else {
+          // (Punto 28) 'cantidadCuotas' ya no es form-cache
+          formDataObject[key] = el.value; // Recolecta campos de texto (incluyendo readOnly de Pre-Venta)
+        }
+      });
+      
+      // (Punto 28) Forzar 3 cuotas si se seleccionó esa opción
+      if (formDataObject['metodoPago'] === 'Pago en Cuotas') {
+          formDataObject['cantidadCuotas'] = "3";
+      }
+
+      // --- 5. Recolección de Datos Faltantes ---
+      formDataObject.tipoInscripto = document.getElementById('tipoInscripto').value;
+      formDataObject.esHermanoCompletando = (document.getElementById('esHermanoCompletando').value === "true");
+      formDataObject.urlCertificadoAptitud = document.getElementById('urlCertificadoAptitud').value;
+      formDataObject.urlFotoCarnet = document.getElementById('urlFotoCarnet').value;
+      
+      formDataObject.personasAutorizadas = Array.from(nombresAut)
+        .map((el, i) => (el.value && dnisAut[i] && dnisAut[i].value) ? `${el.value.trim()} (DNI: ${dnisAut[i].value.trim()})` : null)
+        .filter(Boolean)
+        .join(', ');
+
+      // Recolección de Hermanos
+      formDataObject.hermanos = [];
+      const nombresHermano = document.querySelectorAll('.hermano-nombre');
+      const apellidosHermano = document.querySelectorAll('.hermano-apellido');
+      const dnisHermano = document.querySelectorAll('.hermano-dni');
+      const fechasNacHermano = document.querySelectorAll('.hermano-fechanac');
+      for (let i = 0; i < dnisHermano.length; i++) {
+        if (nombresHermano[i].value && apellidosHermano[i].value && dnisHermano[i].value && fechasNacHermano[i].value) {
+          formDataObject.hermanos.push({
+            nombre: nombresHermano[i].value,
+            apellido: apellidosHermano[i].value,
+            dni: dnisHermano[i].value,
+            fechaNac: fechasNacHermano[i].value
+          });
+        }
+      }
+
+      // --- 6. Validación de Archivos (Foto y Aptitud) ---
+      const urlFoto = formDataObject.urlFotoCarnet;
+      const fotoFile = form.fotoCarnet.files[0];
+      if (!urlFoto) {
+        let msg = '<strong>Error:</strong> Debe seleccionar y subir una Foto Carnet (Requerida).';
+        if (fotoFile) {
+          msg = '<strong>Error:</strong> La Foto Carnet está seleccionada pero aún no se ha subido.<br>Espere a que la subida finalice (✅) o vuelva a seleccionarla.';
+        }
+        return validationFail(msg, form.fotoCarnet, true);
+      }
+      if (form.certificadoAptitud.files[0] && !formDataObject.urlCertificadoAptitud) {
+        let msg = '<strong>Error:</strong> El Certificado de Aptitud se está subiendo o falló.<br>Por favor, espere o vuelva a seleccionarlo.';
+        return validationFail(msg, form.certificadoAptitud, true);
+      }
+
+      // --- 7. Envío al Servidor ---
+      loader.querySelector('p').textContent = 'Procesando registro... Por favor, espere.';
+      
+      google.script.run
+        .withSuccessHandler(handleRegistroSuccess)
+        .withFailureHandler(handleRegistroFailure)
+        .paso1_registrarRegistro(formDataObject);
+
+    } catch (err) {
+      // --- Bloque CATCH general ---
+      // Si ocurre cualquier error inesperado (como el 'classs'), lo mostramos.
+      console.error("Error fatal en el submit:", err);
+      validationFail(`Error inesperado en el formulario: ${err.message}. Revise la consola.`);
+    }
+  });
+  // =========================================================
+  // (FIN CORRECCIÓN 8)
+  // =========================================================
+
+  document.getElementById('btn-limpiar-form').addEventListener('click', function() {
+    if (confirm('¿Está seguro de que desea reiniciar el formulario? Se perderán todos los datos cargados.')) {
+      limpiarCache();
+      window.top.location.href = APP_URL;
+    }
+  });
+
+  document.getElementById('registroForm').addEventListener('change', guardarFormEnCache);
+
+}); // <-- FIN DEL DOMContentLoaded
+</script>

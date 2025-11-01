@@ -33,10 +33,10 @@ body::before {
     width: 100vw;
    
     background-image: url('https://i.imgur.com/1F0Eoqy.jpeg');
-    background-size: contain;
+    background-size: contain; /* <-- MODIFICADO: Vuelto a 'contain' para mobile */
     background-position: center;
     background-attachment: fixed;
-    padding: 20px;
+    padding: 20px; /* <-- MODIFICADO: Restaurado padding original */
     background-repeat: no-repeat;
   }
 
@@ -58,7 +58,7 @@ body::before {
     margin: auto;
    
     padding: 25px;
-    background-color: rgba(255, 255, 255, 0.75);
+    background-color: rgba(255, 255, 255, 0.70); /* <-- Opacidad reducida de 0.75 */
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     /* (V) Agregamos border-radius para un mejor look */
@@ -83,8 +83,8 @@ body::before {
   }
 
   .form-section {
-    background-color: rgba(255, 255, 255, 0.7);
-    /* Fondo blanco con 70% de opacidad para cada sección del formulario */
+    background-color: rgba(255, 255, 255, 0.65); /* <-- Opacidad reducida de 0.7 */
+    /* Fondo blanco con opacidad para cada sección del formulario */
     padding: 20px;
     margin-bottom: 20px;
     border-radius: 6px;
@@ -452,6 +452,20 @@ body::before {
     width: 100%; /* Asegurar que los inputs usen todo el ancho */
     box-sizing: border-box; /* Incluir padding en el ancho */
   }
-  /* --- FIN ESTILOS PUNTO 15 --- */
+  
+  /* --- Nuevos Estilos para Contraste de Fondo --- */
+.contrasted-background {
+    filter: contrast(120%) brightness(85%); /* Aumenta contraste 20%, oscurece 15% */
+}
+
+/* Opcional: si quieres un contraste más fuerte */
+.contrasted-background-strong {
+    filter: contrast(140%) brightness(75%); /* Aumenta contraste 40%, oscurece 25% */
+}
+
+/* Opcional: si quieres un efecto más sutil */
+.contrasted-background-subtle {
+    filter: contrast(110%) brightness(90%); /* Aumenta contraste 10%, oscurece 10% */
+}
 
 </style>

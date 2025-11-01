@@ -10,7 +10,7 @@
 </head>
 
 
-<body>
+<body class="contrasted-background">
   <div class="container">
     <h1>Formulario de Inscripción</h1>
     <h2>Colonia de Verano 2025</h2>
@@ -26,7 +26,7 @@
           <option value="preventa">Soy Inscripto PRE-VENTA</option>
         </select>
         <label for="dni-input">Ingrese el DNI del inscripto (sin puntos)</label>
-        <input type="text" id="dni-input" required pattern="\d{7,8}" maxlength="8" placeholder="Ej: 12345678">
+        <input type="tel" id="dni-input" required pattern="[0-9]{7,8}" inputmode="numeric" maxlength="8" placeholder="Ej: 12345678">
         <button type="button" id="btn-validar">Verificar DNI</button>
       </div>
       <div class="loader" id="loader-validacion">
@@ -53,7 +53,7 @@
           <input type="text" id="apellido" name="apellido" class="form-cache" required>
 
           <label for="dni">DNI: (sin puntos)</label>
-          <input type="text" id="dni" name="dni" class="form-cache" required readonly>
+          <input type="text" id="dni" name="dni" class="form-cache" required readonly inputmode="numeric">
           <label for="fechaNacimiento">Fecha de Nacimiento:</label>
           <input type="date" id="fechaNacimiento" name="fechaNacimiento" class="form-cache" required>
           <div id="edad-calculada"></div>
@@ -75,7 +75,7 @@
           <input type="text" id="adultoResponsable1" name="adultoResponsable1" class="form-cache" required>
 
           <label for="dniResponsable1">DNI Responsable 1: (sin puntos)</label>
-          <input type="text" id="dniResponsable1" name="dniResponsable1" class="form-cache" required pattern="\d{7,8}" maxlength="8">
+          <input type="tel" id="dniResponsable1" name="dniResponsable1" class="form-cache" required pattern="[0-9]{7,8}" inputmode="numeric" maxlength="8">
 
           <label for="telAreaResp1">Teléfono Responsable 1:</label>
           <div class="grupo-telefono">
@@ -177,18 +177,24 @@
             <option value="Pago 1 Cuota Deb/Cred MP(Total)">Pago 1 Cuota Deb/Cred MP(Total)</option>
             <option value="Pago en Cuotas">Pago en 3 Cuotas</option> 
             <option value="Pago Efectivo (Adm del Club)">Pago Efectivo (Adm del Club)</option>
-            <option value="Transferencia">Transferencia</option>
+            <option value="Transferencia">Transferencia(Bancaria,Envío Dinero,etc)</option>
           </select>
 
           <div id="transferencia-info">
             <p>TITULAR DE LA CUENTA: <strong>Walter Jonas Marrello</strong></p>
             <p>Alias: <strong id="alias-transferencia">clubhipicomendoza</strong></p>
             <button type="button" id="btn-copiar-alias">Copiar Alias</button>
-            <p style="margin-top: 10px; font-size: 0.9em;">Luego de transferir, deberá volver a ingresar con su DNI para
-              subir el comprobante.</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">Luego de transferir, deberá volver a ingresar con su DNI para subir el comprobante.</p>
           </div>
           
+          <div id="cuotas-info">
+            <p><strong>Fechas de Vencimiento de Cuotas:</strong></p>
+            <p><strong>1ª cuota:</strong> del 1 al 10 de noviembre 2025</p>
+            <p><strong>2ª cuota:</strong> del 1 al 10 de diciembre 2025</p>
+            <p><strong>3ª cuota:</strong> del 1 al 10 de enero 2026</p>
           </div>
+          
+        </div>
 
         <button type="submit" id="submit-button">Registrar y Continuar</button>
         <button type="button" id="btn-limpiar-form">VOLVER (Limpiar Formulario)</button>
@@ -208,6 +214,7 @@
   </script>
 
   <?!= HtmlService.createHtmlOutputFromFile('js').getContent(); ?>
+  <?!= HtmlService.createHtmlOutputFromFile('Eventos').getContent(); ?>
 </body>
 
 </html>

@@ -1,165 +1,93 @@
-// --- CONSTANTES GLOBALES ---
-const SPREADSHEET_ID = '1Ru-XGng2hYJbUvl-H2IA7aYQx7Ju-jk1LT1fkYOnG0w';
-/* */
-const NOMBRE_HOJA_BUSQUEDA = 'Base de Datos';
-const NOMBRE_HOJA_REGISTRO = 'Registros';
-const NOMBRE_HOJA_CONFIG = 'Config';
-
-/* */
-const FOLDER_ID_FOTOS = '1S2SbkuYdvcLFZYoHacfgwEU80kAN094l';
-const FOLDER_ID_FICHAS = '1aDsTTDWHiDFUeZ8ByGp8_LY3fdzVQomu';
-const FOLDER_ID_COMPROBANTES = '169EISq4RsDetQ0H3B17ViZFfe25xPcMM';
-
 // =========================================================
-// (Punto 1) CONSTANTES "Base de Datos" ACTUALIZADAS
-// =========================================================
-const COL_HABILITADO_BUSQUEDA = 2; // Col B
-const COL_NOMBRE_BUSQUEDA = 3; // Col C (NUEVA)
-const COL_APELLIDO_BUSQUEDA = 4; // Col D (NUEVA)
-const COL_FECHA_NACIMIENTO_BUSQUEDA = 5; // Col E (antes D=4)
-// Col F (Edad) se salta
-const COL_DNI_BUSQUEDA = 7; // Col G (antes F=6)
-const COL_OBRASOCIAL_BUSQUEDA = 8; // Col H (antes G=7)
-const COL_COLEGIO_BUSQUEDA = 9; // Col I (antes H=8)
-const COL_RESPONSABLE_BUSQUEDA = 10; // Col J (antes I=9)
-const COL_TELEFONO_BUSQUEDA = 11; // Col K (antes J=10)
-// =========================================================
-// (Punto 2, 3, 4, 5, 15, 17, 27) CONSTANTES "Registros" ACTUALIZADAS (47 columnas)
-// =========================================================
-const COL_NUMERO_TURNO = 1; // A
-const COL_MARCA_TEMPORAL = 2; // B
-const COL_MARCA_N_E_A = 3; // C
-const COL_ESTADO_NUEVO_ANT = 4; // D
-const COL_EMAIL = 5; // E
-const COL_NOMBRE = 6; // F
-const COL_APELLIDO = 7; // G
-const COL_FECHA_NACIMIENTO_REGISTRO = 8; // H
-const COL_EDAD_ACTUAL = 9; // I
-const COL_DNI_INSCRIPTO = 10; // J
-const COL_OBRA_SOCIAL = 11; // K
-const COL_COLEGIO_JARDIN = 12; // L
-const COL_ADULTO_RESPONSABLE_1 = 13; // M
-const COL_DNI_RESPONSABLE_1 = 14; // N
-const COL_TEL_RESPONSABLE_1 = 15; // O
-const COL_ADULTO_RESPONSABLE_2 = 16; // P
-const COL_TEL_RESPONSABLE_2 = 17; // Q
-const COL_PERSONAS_AUTORIZADAS = 18; // R
-const COL_PRACTICA_DEPORTE = 19; // S
-const COL_ESPECIFIQUE_DEPORTE = 20; // T
-const COL_TIENE_ENFERMEDAD = 21; // U
-const COL_ESPECIFIQUE_ENFERMEDAD = 22; // V
-const COL_ES_ALERGICO = 23; // W
-const COL_ESPECIFIQUE_ALERGIA = 24; // X
-const COL_APTITUD_FISICA = 25; // Y
-const COL_FOTO_CARNET = 26; // Z
-const COL_JORNADA = 27; // AA
-const COL_SOCIO = 28; // AB (NUEVA COLUMNA - PUNTO 27)
-const COL_METODO_PAGO = 29; // AC (antes 28)
-const COL_PRECIO = 30; // AD (antes 29)
-const COL_CUOTA_1 = 31; // AE (antes 30)
-const COL_CUOTA_2 = 32; // AF (antes 31)
-const COL_CUOTA_3 = 33; // AG (antes 32)
-const COL_CANTIDAD_CUOTAS = 34; // AH (antes 33)
-const COL_ESTADO_PAGO = 35; // AI (antes 34)
-const COL_MONTO_A_PAGAR = 36; // AJ (antes 35)
-const COL_ID_PAGO_MP = 37; // AK (antes 36)
-const COL_PAGADOR_NOMBRE = 38; // AL (antes 37)
-const COL_DNI_PAGADOR_MP = 39; // AM (antes 38)
-const COL_PAGADOR_NOMBRE_MANUAL = 40; // AN (antes 39)
-const COL_PAGADOR_DNI_MANUAL = 41; // AO (antes 40)
-const COL_COMPROBANTE_MP = 42; // AP (antes 41)
-const COL_COMPROBANTE_MANUAL_TOTAL_EXT = 43; // AQ (antes 42)
-const COL_COMPROBANTE_MANUAL_CUOTA1 = 44; // AR (antes 43)
-const COL_COMPROBANTE_MANUAL_CUOTA2 = 45; // AS (antes 44)
-const COL_COMPROBANTE_MANUAL_CUOTA3 = 46; // AT (antes 45)
-const COL_ENVIAR_EMAIL_MANUAL = 47; // AU (antes 46)
-
-
-// (Punto 25) CONSTANTES PARA LA NUEVA HOJA "Preventa"
-const NOMBRE_HOJA_PREVENTA = 'PRE-VENTA';
-const COL_PREVENTA_EMAIL = 3;       // Col C
-const COL_PREVENTA_NOMBRE = 4;      // Col D
-const COL_PREVENTA_APELLIDO = 5;    // Col E
-const COL_PREVENTA_DNI = 6;         // Col F
-const COL_PREVENTA_FECHA_NAC = 7;   // Col G
-const COL_PREVENTA_GUARDA = 8;      // Col H
-
-// =========================================================
-// (doGet CORREGIDA)
+// (doGet CORREGIDA por solicitud del usuario)
 // =========================================================
 function doGet(e) {
   try {
     const params = e.parameter;
     Logger.log("doGet INICIADO. Parámetros de URL: " + JSON.stringify(params));
-    let paymentId = null;
-
-    // --- Lógica para buscar el ID de pago ---
-    if (params) {
-      if (params.payment_id) {
-        paymentId = params.payment_id;
-      } else if (params.data && typeof params.data === 'string' && params.data.startsWith('{')) {
-        try {
-          const dataObj = JSON.parse(params.data);
-          if (dataObj.id) paymentId = dataObj.id;
-        } catch (jsonErr) {
-          Logger.log("No se pudo parsear e.parameter.data: " + params.data);
-        }
-      } else if (params.topic && params.topic === 'payment' && params.id) {
-        paymentId = params.id;
-      }
-    }
 
     const appUrl = ScriptApp.getService().getUrl();
 
-    // --- CAMINO 1: Se detectó un pago (Redirect de Mercado Pago) ---
-    if (paymentId) {
-      Logger.log("doGet detectó regreso de MP. Procesando Payment ID: " + paymentId);
-      procesarNotificacionDePago(paymentId); // Vive en Pagos.gs
-
-      // Esta página es simple y no necesita los archivos externos.
-      // Tu código original está perfecto.
-      const html = `
-        <html>
-          <head>
-            <title>Pago Completo</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-              body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 90vh; flex-direction: column; text-align: center; background-color: #f4f4f4; }
-              .container { background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-              .btn { display: inline-block; padding: 15px 30px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; font-size: 1.2em; margin-top: 20px; transition: background-color 0.3s; }
-              .btn:hover { background-color: #218838; }
-              h2 { color: #28a745; }
-              p { font-size: 1.1em; color: #333; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <h2>¡Pago Procesado Exitosamente!</h2>
-              <p>Gracias por completar el pago. Presione el botón para volver al formulario.</p>
-              <a href="${appUrl}" target="_top" class="btn">Volver al Formulario</a>
-            </div>
-          </body>
-        </html>`;
-      return HtmlService.createHtmlOutput(html)
-        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
-
-      // --- CAMINO 2: Visita normal al formulario ---
-    } else {
-      // Carga 'Index.html' como una plantilla
-      const htmlTemplate = HtmlService.createTemplateFromFile('Index');
-
-      // Pasa la URL de la app al HTML (para que tu JS la pueda usar si es necesario)
-      htmlTemplate.appUrl = appUrl;
-
-      // .evaluate() ejecuta los <?!= ... ?> e inserta el 
-      // contenido de 'styleHead.html' y 'js.html'
-      const html = htmlTemplate.evaluate()
-        .setTitle("Formulario de Registro")
-        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT)
-        .addMetaTag('viewport', 'width=device-width, initial-scale=1');
-
-      return html;
+    // --- (NUEVA MODIFICACIÓN) ---
+    // Si Mercado Pago devuelve "failure" (ej. "Volver al sitio"),
+    // forzar la carga del formulario, ignorando cualquier paymentId que pueda venir.
+    if (params.status === 'failure') {
+      Logger.log("doGet detectó 'status=failure'. Redirigiendo al formulario.");
+      // Cae en el "CAMINO 2" (mostrar formulario)
     }
+    // --- (FIN DE LA MODIFICACIÓN) ---
+
+    // Si status NO es 'failure' (es 'success', 'pending', o no existe)
+    else {
+      let paymentId = null;
+
+      // --- Lógica para buscar el ID de pago ---
+      if (params) {
+        if (params.payment_id) {
+          paymentId = params.payment_id;
+        } else if (params.data && typeof params.data === 'string' && params.data.startsWith('{')) {
+          try {
+            const dataObj = JSON.parse(params.data);
+            if (dataObj.id) paymentId = dataObj.id;
+          } catch (jsonErr) {
+            Logger.log("No se pudo parsear e.parameter.data: " + params.data);
+          }
+        } else if (params.topic && params.topic === 'payment' && params.id) {
+          paymentId = params.id;
+        }
+      }
+
+      // --- CAMINO 1: Se detectó un pago (Redirect de Mercado Pago) ---
+      if (paymentId) {
+        Logger.log("doGet detectó regreso de MP. Procesando Payment ID: " + paymentId);
+        procesarNotificacionDePago(paymentId); // Vive en Pagos.gs
+
+        // Esta página es simple y no necesita los archivos externos.
+        // Tu código original está perfecto.
+        const html = `
+          <html>
+            <head>
+              <title>Pago Completo</title>
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 90vh; flex-direction: column; text-align: center; background-color: #f4f4f4; }
+                .container { background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+                .btn { display: inline-block; padding: 15px 30px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; font-size: 1.2em; margin-top: 20px; transition: background-color: 0.3s; }
+                .btn:hover { background-color: #218838; }
+                h2 { color: #28a745; }
+                p { font-size: 1.1em; color: #333; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <h2>¡Pago Procesado Exitosamente!</h2>
+                <p>Gracias por completar el pago. Presione el botón para volver al formulario.</p>
+                <a href="${appUrl}" target="_top" class="btn">Volver al Formulario</a>
+              </div>
+            </body>
+          </html>`;
+        return HtmlService.createHtmlOutput(html)
+          .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
+      }
+      // Si no es 'failure' Y TAMPOCO tiene 'paymentId', cae al Camino 2.
+    }
+
+    // --- CAMINO 2: Visita normal al formulario (o 'status=failure') ---
+    // Carga 'Index.html' como una plantilla
+    const htmlTemplate = HtmlService.createTemplateFromFile('Index');
+
+    // Pasa la URL de la app al HTML (para que tu JS la pueda usar si es necesario)
+    htmlTemplate.appUrl = appUrl;
+
+    // .evaluate() ejecuta los <?!= ... ?> e inserta el 
+    // contenido de 'styleHead.html' y 'js.html'
+    const html = htmlTemplate.evaluate()
+      .setTitle("Formulario de Registro")
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT)
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+
+    return html;
+
   } catch (err) {
     Logger.log("Error en la detección de parámetros de doGet: " + err.toString());
     return HtmlService.createHtmlOutput("<b>Ocurrió un error:</b> " + err.message);
@@ -228,6 +156,25 @@ function registrarDatos(datos) {
     const dniBuscado = limpiarDNI(datos.dni);
 
     let hojaRegistro = ss.getSheetByName(NOMBRE_HOJA_REGISTRO);
+
+    // =========================================================
+    // (¡¡¡NUEVA VALIDACIÓN ANTI-DUPLICADOS!!!)
+    // =========================================================
+    // Esta validación se ejecuta ANTES de añadir la fila
+    // para prevenir que un DNI se registre dos veces.
+    if (hojaRegistro && hojaRegistro.getLastRow() > 1) {
+      const rangoDniRegistro = hojaRegistro.getRange(2, COL_DNI_INSCRIPTO, hojaRegistro.getLastRow() - 1, 1);
+      const celdaRegistro = rangoDniRegistro.createTextFinder(dniBuscado).matchEntireCell(true).findNext();
+      if (celdaRegistro) {
+        Logger.log(`BLOQUEO DE REGISTRO: El DNI ${dniBuscado} ya existe en la fila ${celdaRegistro.getRow()}.`);
+        // Usamos status 'ERROR' para que el frontend muestre el mensaje en rojo.
+        return { status: 'ERROR', message: `El DNI ${dniBuscado} ya se encuentra registrado. No se puede crear un duplicado.` };
+      }
+    }
+    // =========================================================
+    // (FIN DE LA VALIDACIÓN)
+    // =========================================================
+
     if (!hojaRegistro) {
       hojaRegistro = ss.insertSheet(NOMBRE_HOJA_REGISTRO);
       // --- (¡¡¡ENCABEZADOS ACTUALIZADOS PUNTO 27!!!) ---
@@ -256,51 +203,33 @@ function registrarDatos(datos) {
         'Comprobante Manual (C3)', // AT (antes AQ)
         'Enviar Email?' // AU (antes AR)
       ]);
-      // (NUEVA MODIFICACIÓN) Asignar el primer turno como 2 si la hoja es nueva
-      hojaRegistro.getRange("A2").setValue(2);
+      // (MODIFICACIÓN) Se elimina la línea que seteaba A2=2
     }
 
     // --- CÁLCULO DE PRECIOS ---
-    let precio = 0;
-    let montoAPagar = 0;
-    try {
-      if (datos.metodoPago === 'Pago en Cuotas') {
-        precio = hojaConfig.getRange("B20").getValue(); // Precio Cuota
-        montoAPagar = precio * (parseInt(datos.cantidadCuotas) || 0);
-      } else if (datos.metodoPago === 'Pago 1 Cuota Deb/Cred MP(Total)') {
-        precio = hojaConfig.getRange("B14").getValue(); // Precio Total
-        montoAPagar = precio;
-      }
-      if (precio === 0) {
-        precio = hojaConfig.getRange("B14").getValue();
-      }
-      if (montoAPagar === 0 && (datos.metodoPago === 'Pago Efectivo (Adm del Club)' || datos.metodoPago === 'Transferencia')) {
-        montoAPagar = precio;
-      }
-    } catch (e) {
-      Logger.log("Error al leer precios de config: " + e.message);
-    }
+    // (MODIFICACIÓN) Llamada a la función helper (que vive en Pagos.gs) para centralizar la lógica
+    const { precio, montoAPagar } = obtenerPrecioDesdeConfig(datos.metodoPago, datos.cantidadCuotas, hojaConfig);
 
 
     // --- REGISTRO DEL INSCRIPTO PRINCIPAL ---
     
-    // (NUEVA MODIFICACIÓN) Cálculo robusto del próximo N° de Turno
+    // (MODIFICACIÓN) Cálculo robusto del próximo N° de Turno
     const lastRow = hojaRegistro.getLastRow();
     let ultimoTurno = 0;
     if (lastRow > 1) {
-      // Obtener todos los valores de la Col A (desde la fila 2)
+      // Obtener todos los valores de la Columna A (desde la fila 2)
       const rangoTurnos = hojaRegistro.getRange(2, COL_NUMERO_TURNO, lastRow - 1, 1).getValues();
       const turnosReales = rangoTurnos.map(f => f[0]).filter(Number); // Filtra vacíos/texto y quédate con números
       
       if (turnosReales.length > 0) {
         ultimoTurno = Math.max(...turnosReales); // Encuentra el número más alto
       } else {
-        ultimoTurno = 1; // No se encontraron números, pero la fila 1 es header
+        ultimoTurno = 0; // <-- MODIFICACIÓN (era 1)
       }
     } else {
-      ultimoTurno = 1; // Solo está la fila de header
+      ultimoTurno = 0; // <-- MODIFICACIÓN (era 1)
     }
-    const nuevoNumeroDeTurno = ultimoTurno + 1; // Si el max es 10, el nuevo es 11. Si no hay datos (solo header), lastRow=1, ultimoTurno=1, el nuevo es 2.
+    const nuevoNumeroDeTurno = ultimoTurno + 1; // Si la hoja está vacía, ultimoTurno=0, nuevo=1.
 
 
     const edadCalculada = calcularEdad(datos.fechaNacimiento);
@@ -386,12 +315,16 @@ function registrarDatos(datos) {
         const fechaObjHermano = new Date(hermano.fechaNac);
         const fechaFmtHermano = Utilities.formatDate(fechaObjHermano, ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd');
 
-        // (Punto 6, 17, 27) Los hermanos se registran con datos mínimos y estado de pago pendiente
+        // ==========================================================================================
+        // (MODIFICACIÓN CLAVE - SEGÚN ÚLTIMA SOLICITUD)
+        // Se pre-rellenan los campos solicitados (Email, Obra Social, Responsables, Autorizados)
+        // y se dejan vacíos los campos propios del hermano (Colegio, Salud, Pago, etc.)
+        // ==========================================================================================
         const filaHermano = [
           proximoTurnoHermano, new Date(), '', estadoHermano, // A-D
-          datos.email, hermano.nombre, hermano.apellido, // E-G
+          datos.email, hermano.nombre, hermano.apellido, // E-G (Email del principal)
           fechaFmtHermano, edadFmtHermano, dniHermano, // H-J
-          '', '', // K-L (Obra social, Colegio VACÍOS)
+          datos.obraSocial, '', // K-L (Obra Social del principal, Colegio VACÍO)
           datos.adultoResponsable1, datos.dniResponsable1, telResp1, // M-O (Datos del Resp 1)
           datos.adultoResponsable2, telResp2, // P-Q (Datos del Resp 2)
           datos.personasAutorizadas, // R (Autorizados)
@@ -623,6 +556,7 @@ function obtenerEstadoRegistro() {
   }
 }
 
+
 // =========================================================
 // (Punto 1, 6, 7, 12, 25) validarAcceso (COMPLETAMENTE REESTRUCTURADO)
 // =========================================================
@@ -739,7 +673,7 @@ function validarAcceso(dni, tipoInscripto) {
       const obraSocial = String(fila[6] || '').trim();
       const colegioJardin = String(fila[7] || '').trim();
       const responsable = String(fila[8] || '').trim();
-      const telefono = String(fila[9] || '').trim();
+      // const telefono = String(fila[9] || '').trim(); // <-- (MODIFICACIÓN: Esta línea ya no se usa)
       const fechaNacimientoStr = (fechaNacimientoRaw instanceof Date) ? Utilities.formatDate(fechaNacimientoRaw, ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : '';
 
       return {
@@ -752,7 +686,8 @@ function validarAcceso(dni, tipoInscripto) {
           obraSocial: obraSocial,
           colegioJardin: colegioJardin,
           adultoResponsable1: responsable,
-          telResponsable1: telefono,
+          // (MODIFICACIÓN: Teléfono omitido según solicitud)
+          // telResponsable1: telefono,
           esPreventa: false // Flag
         },
         edad: calcularEdad(fechaNacimientoStr),
@@ -796,7 +731,7 @@ function gestionarUsuarioYaRegistrado(ss, hojaRegistro, filaRegistro, dniLimpio,
   // Lógica de HERMANO_COMPLETAR
   if (estadoInscripto === 'Nuevo Hermano/a' || estadoInscripto === 'Anterior Hermano/a') {
       let faltantes = [];
-      if (!rangoFila[COL_OBRA_SOCIAL - 1]) faltantes.push('Obra Social');
+      // (MODIFICACIÓN) Se revisan los campos que el hermano DEBE completar
       if (!rangoFila[COL_COLEGIO_JARDIN - 1]) faltantes.push('Colegio / Jardín');
       if (!rangoFila[COL_PRACTICA_DEPORTE - 1]) faltantes.push('Practica Deporte');
       if (!rangoFila[COL_TIENE_ENFERMEDAD - 1]) faltantes.push('Enfermedad Preexistente');
@@ -805,6 +740,11 @@ function gestionarUsuarioYaRegistrado(ss, hojaRegistro, filaRegistro, dniLimpio,
       if (!rangoFila[COL_JORNADA - 1]) faltantes.push('Jornada');
       if (!rangoFila[COL_SOCIO - 1]) faltantes.push('Es Socio'); // (PUNTO 27) Añadido
       if (!rangoFila[COL_METODO_PAGO - 1]) faltantes.push('Método de Pago');
+
+      // (MODIFICACIÓN) Se revisan los campos que DEBERÍAN estar pre-rellenados
+      // Con la corrección en 'registrarDatos', 'COL_EMAIL' ahora debería estar lleno.
+      if (!rangoFila[COL_EMAIL - 1]) faltantes.push('Email'); 
+      if (!rangoFila[COL_ADULTO_RESPONSABLE_1 - 1]) faltantes.push('Responsable 1');
       if (!rangoFila[COL_PERSONAS_AUTORIZADAS - 1]) faltantes.push('Personas Autorizadas');
       
       const datos = {
@@ -813,27 +753,32 @@ function gestionarUsuarioYaRegistrado(ss, hojaRegistro, filaRegistro, dniLimpio,
           apellido: rangoFila[COL_APELLIDO - 1],
           // (SOLUCIÓN AL ERROR) Usa 'ss.getSpreadsheetTimeZone()' en lugar de 'SpreadsheetApp.getActive()'
           fechaNacimiento: rangoFila[COL_FECHA_NACIMIENTO_REGISTRO - 1] ? Utilities.formatDate(new Date(rangoFila[COL_FECHA_NACIMIENTO_REGISTRO - 1]), ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : '',
-          adultoResponsable1: rangoFila[COL_ADULTO_RESPONSABLE_1 - 1],
-          dniResponsable1: rangoFila[COL_DNI_RESPONSABLE_1 - 1],
-          telResponsable1: rangoFila[COL_TEL_RESPONSABLE_1 - 1],
-          adultoResponsable2: rangoFila[COL_ADULTO_RESPONSABLE_2 - 1],
-          telResponsable2: rangoFila[COL_TEL_RESPONSABLE_2 - 1],
-          personasAutorizadas: rangoFila[COL_PERSONAS_AUTORIZADAS - 1],
-          obraSocial: rangoFila[COL_OBRA_SOCIAL - 1],
-          colegioJardin: rangoFila[COL_COLEGIO_JARDIN - 1]
+          
+          // (MODIFICACIÓN) Estos campos ahora SÍ vendrán de la hoja
+          email: rangoFila[COL_EMAIL - 1] || '',
+          adultoResponsable1: rangoFila[COL_ADULTO_RESPONSABLE_1 - 1] || '',
+          dniResponsable1: rangoFila[COL_DNI_RESPONSABLE_1 - 1] || '',
+          telResponsable1: rangoFila[COL_TEL_RESPONSABLE_1 - 1] || '',
+          adultoResponsable2: rangoFila[COL_ADULTO_RESPONSABLE_2 - 1] || '',
+          telResponsable2: rangoFila[COL_TEL_RESPONSABLE_2 - 1] || '',
+          personasAutorizadas: rangoFila[COL_PERSONAS_AUTORIZADAS - 1] || '',
+          obraSocial: rangoFila[COL_OBRA_SOCIAL - 1] || '',
+          
+          // Este campo (Colegio) se mantiene vacío a propósito (según tu lógica)
+          colegioJardin: rangoFila[COL_COLEGIO_JARDIN - 1] || ''
       };
       
-      if (faltantes.length > 0) {
-          return {
-              status: 'HERMANO_COMPLETAR',
-              message: `⚠️ ¡Hola ${datos.nombre}! Eres un hermano/a pre-registrado.\n` +
-                `Tiene que completar el registro para obtener el cupo definitivo y el link para pagar.\n` +
-                `Campos requeridos faltantes: <strong>${faltantes.join(', ')}</strong>.`,
-              datos: datos,
-              jornadaExtendidaAlcanzada: estado.jornadaExtendidaAlcanzada,
-              tipoInscripto: estadoInscripto
-          };
-      }
+      // Ya sea que falten campos por llenar o no (ej. si vuelve a validar),
+      // se le muestra el formulario para completar/revisar.
+      return {
+          status: 'HERMANO_COMPLETAR',
+          message: `⚠️ ¡Hola ${datos.nombre}! Eres un hermano/a pre-registrado.\n` +
+            `Por favor, complete/verifique TODOS los campos del formulario para obtener el cupo definitivo y el link para pagar.\n` +
+            (faltantes.length > 0 ? `Campos requeridos faltantes detectados: <strong>${faltantes.join(', ')}</strong>.` : 'Todos los campos parecen estar listos para verificar.'),
+          datos: datos,
+          jornadaExtendidaAlcanzada: estado.jornadaExtendidaAlcanzada,
+          tipoInscripto: estadoInscripto
+      };
   }
 
   // Lógica de REGISTRO_ENCONTRADO (Repago, Subir comprobante, etc.)
@@ -842,7 +787,10 @@ function gestionarUsuarioYaRegistrado(ss, hojaRegistro, filaRegistro, dniLimpio,
   const cantidadCuotasRegistrada = parseInt(rangoFila[COL_CANTIDAD_CUOTAS - 1]) || 0;
   let proximaCuotaPendiente = null;
   
-  if (estadoPago === 'Pagado') {
+  // --- (MODIFICACIÓN CRÍTICA) ---
+  // Se cambia 'estadoPago === 'Pagado'' por 'String(estadoPago).includes('Pagado')'
+  // Esto captura "Pagado", " Pagado", "Pagado." etc. y previene el repago.
+  if (String(estadoPago).includes('Pagado')) {
       return { 
         status: 'REGISTRO_ENCONTRADO', 
         message: `✅ El DNI ${dniLimpio} (${nombreRegistrado}) ya se encuentra REGISTRADO y la inscripción está PAGADA.`, 
@@ -850,6 +798,20 @@ function gestionarUsuarioYaRegistrado(ss, hojaRegistro, filaRegistro, dniLimpio,
         cantidadCuotas: cantidadCuotasRegistrada,
         metodoPago: metodoPago,
         proximaCuotaPendiente: null
+      };
+  }
+
+  // --- (NUEVA MODIFICACIÓN) ---
+  // Si está "En revisión" (porque ya subió un comprobante), mostrar solo el mensaje.
+  // No intentar generar link de pago ni mostrar el uploader.
+  if (String(estadoPago).includes('En revisión')) {
+      return {
+          status: 'REGISTRO_ENCONTRADO',
+          message: `⚠️ El DNI ${dniLimpio} (${nombreRegistrado}) ya se encuentra REGISTRADO. Su pago está "En revisión".`,
+          adeudaAptitud: adeudaAptitud,
+          cantidadCuotas: cantidadCuotasRegistrada,
+          metodoPago: metodoPago,
+          proximaCuotaPendiente: null
       };
   }
   
@@ -885,6 +847,8 @@ function gestionarUsuarioYaRegistrado(ss, hojaRegistro, filaRegistro, dniLimpio,
           }
         }
         if (identificadorPago == null) {
+          // Si todas las cuotas están pagadas, pero el estado general (AI) no es "Pagado"
+          // (porque quizás falta aptitud, etc.), igual lo tratamos como pagado.
           return {
             status: 'REGISTRO_ENCONTRADO',
             message: `✅ El DNI ${dniLimpio} (${nombreRegistrado}) ya completó todas las cuotas.`,
@@ -932,6 +896,9 @@ function gestionarUsuarioYaRegistrado(ss, hojaRegistro, filaRegistro, dniLimpio,
       };
   }
 }
+
+
+
 // =========================================================
 // (Punto 10) enviarEmailConfirmacion (ACTUALIZADO)
 // =========================================================
